@@ -1,3 +1,0 @@
-/**
- * @fileoverview default source file
- */

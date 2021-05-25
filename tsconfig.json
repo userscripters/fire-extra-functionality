@@ -1,20 +1,16 @@
 {
   "compilerOptions": {
     "strict": true,
-    "removeComments": true,
-    "allowJs": true,
-    "checkJs": true,
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "target": "ES6",
+    "lib": ["DOM", "DOM.iterable", "es2020"],
+    "target": "es2019",
     "module": "CommonJS",
     "moduleResolution": "node",
     "noUnusedParameters": true,
     "noUnusedLocals": true,
     "noErrorTruncation": true,
-    "skipLibCheck": true,
     "downlevelIteration": true,
+    "alwaysStrict": false,
+    "noImplicitUseStrict": true,
     "outDir": "dist"
-  },
-  "exclude": ["dist"],
-  "include": ["src"]
+  }
 }

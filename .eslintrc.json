@@ -1,6 +1,5 @@
 {
   "$schema": "https://json.schemastore.org/eslintrc.json",
-  "noInlineConfig": true,
   "ignorePatterns": "",
   "env": {
     "browser": true
@@ -11,8 +10,13 @@
     "project": "./tsconfig.json"
   },
   "plugins": ["@typescript-eslint"],
+  "extends": [
+      "eslint:recommended",
+      "plugin:@typescript-eslint/recommended",
+      "plugin:@typescript-eslint/recommended-requiring-type-checking"
+  ],
   "rules": {
-    "arrow-parens": "error",
+    "arrow-parens": ["error", "as-needed"],
     "arrow-spacing": "error",
     "brace-style": ["error", "1tbs", { "allowSingleLine": true }],
     "dot-notation": "error",
@@ -35,8 +39,7 @@
     "require-await": "error",
     "semi": "error",
     "space-in-parens": "off",
-    "@typescript-eslint/explicit-function-return-type": "off",
-    "@typescript-eslint/no-misused-promises": "error",
+    "@typescript-eslint/no-misused-promises": ["error", { "checksVoidReturn": false }],
     "func-call-spacing": "error",
     "no-param-reassign": "error",
     "no-tabs": "error",
