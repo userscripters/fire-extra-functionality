@@ -13,8 +13,8 @@
 // @license     GPL-3.0
 // @connect     metasmoke.erwaysoftware.com
 // @connect     stackexchange.com
-// @updateURL   https://gist.github.com/double-beep/89f782b5c6ec182d24c7c169e7402d96/raw/fire_extra.user.js
-// @downloadURL https://gist.github.com/double-beep/89f782b5c6ec182d24c7c169e7402d96/raw/fire_extra.user.js
+// @updateURL   https://github.com/userscripters/fire-extra-functionality/raw/master/dist/fire_extra.user.js
+// @downloadURL https://github.com/userscripters/fire-extra-functionality/raw/master/dist/fire_extra.user.js
 // @homepageURL https://github.com/userscripters/fire-extra-functionality
 // @supportURL  https://github.com/userscripters/fire-extra-functionality/issues
 // ==/UserScript==
