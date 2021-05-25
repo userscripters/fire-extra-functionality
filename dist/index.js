@@ -1,12 +1,11 @@
 void (async function () {
-    var _a;
     const domParser = new DOMParser();
     const metasmokeSearchUrl = 'https://metasmoke.erwaysoftware.com/search';
     const metasmokeApiBase = 'https://metasmoke.erwaysoftware.com/api/v2.0/posts/';
     const metasmokeApiKey = '36d7b497b16d54e23641d0f698a2d7aab7d92777ef3108583b5bd7d9ddcd0a18';
     const postDomainsApiFilter = 'HGGGFLHIHKIHOOH';
     const seSearchPage = 'https://stackexchange.com/search?q=url%3A';
-    const currentRoomId = Number((_a = (/\/rooms\/(\d+)\//.exec(window.location.pathname))) === null || _a === void 0 ? void 0 : _a[1]);
+    const currentRoomId = Number((/\/rooms\/(\d+)\//.exec(window.location.pathname))?.[1]);
     // Copied from FIRE
     const smokeDetectorId = { 'chat.stackexchange.com': 120914, 'chat.stackoverflow.com': 3735529, 'chat.meta.stackexchange.com': 266345 }[location.host];
     const metasmokeId = { 'chat.stackexchange.com': 478536, 'chat.stackoverflow.com': 14262788, 'chat.meta.stackexchange.com': 848503 }[location.host];
@@ -30,7 +29,7 @@ void (async function () {
         githubPrsCall.json()
     ]);
     // returns the number of hits given the SE search result page HTML
-    const getResultCountFromParsedPage = (pageHtml) => { var _a, _b, _c; return Number((_c = (_b = (_a = pageHtml.querySelector('.results-header h2')) === null || _a === void 0 ? void 0 : _a.textContent) === null || _b === void 0 ? void 0 : _b.trim().replace(/,/g, '').match(/\d+/)) === null || _c === void 0 ? void 0 : _c[0]); };
+    const getResultCountFromParsedPage = (pageHtml) => Number(pageHtml.querySelector('.results-header h2')?.textContent?.trim().replace(/,/g, '').match(/\d+/)?.[0]);
     // generate the GraphQL query string
     const getDomainPostsQuery = (idsArray) => `{
         spam_domains(ids: [${idsArray.join(',')}]) {
@@ -75,17 +74,16 @@ void (async function () {
     function getPullRequestDataFromApi(jsonData) {
         // only interested in open PRs by SD
         return jsonData.filter(item => item.user.id === smokeDetectorGithubId && item.state === 'open').flatMap(item => {
-            var _a, _b;
             // Sample PR title => username: Watch example\.com
             const { number, title } = item;
             let regex;
             try {
-                regex = new RegExp(((_a = /(?:Watch|Blacklist)\s(.*)/.exec(title)) === null || _a === void 0 ? void 0 : _a[1]) || '');
+                regex = new RegExp(/(?:Watch|Blacklist)\s(.*)/.exec(title)?.[1] || '');
             }
             catch (error) {
                 return [];
             }
-            const authorName = (_b = (/^(.*?):/.exec(title))) === null || _b === void 0 ? void 0 : _b[1];
+            const authorName = (/^(.*?):/.exec(title))?.[1];
             const prType = (/^.*?:\s(Watch)\s/.exec(title)) ? 'watch' : 'blacklist';
             return [{ id: number, regex: regex, author: authorName || '', type: prType }];
         });
@@ -171,10 +169,9 @@ void (async function () {
         return domainStats;
     }
     async function sendActionMessageToChat(messageType, domainOrPrId) {
-        var _a;
         const messageToSend = `!!/${messageType === 'blacklist' ? messageType + '-website' : messageType}- ${domainOrPrId}`
             .replace('approve-', 'approve'); // no need for approve to have a dash
-        const userFkey = (_a = document.querySelector('input[name="fkey"]')) === null || _a === void 0 ? void 0 : _a.value;
+        const userFkey = document.querySelector('input[name="fkey"]')?.value;
         toastr.error('Chat fkey not found');
         if (!userFkey)
             return; // fkey not found for some reason; chat message cannot be sent
@@ -207,10 +204,9 @@ void (async function () {
         });
     }
     function updateDomainInformation(domainName) {
-        var _a, _b;
-        const seResultCount = (_a = allDomainInformation[domainName]) === null || _a === void 0 ? void 0 : _a.stackexchange;
-        const metasmokeStats = (_b = allDomainInformation[domainName]) === null || _b === void 0 ? void 0 : _b.metasmoke;
-        if ((!seResultCount && seResultCount !== '0') || !(metasmokeStats === null || metasmokeStats === void 0 ? void 0 : metasmokeStats.length))
+        const seResultCount = allDomainInformation[domainName]?.stackexchange;
+        const metasmokeStats = allDomainInformation[domainName]?.metasmoke;
+        if ((!seResultCount && seResultCount !== '0') || !metasmokeStats?.length)
             return; // the SE hits might be zero, so using !hits returns true
         const isWatched = isCaught(watchedWebsitesRegexes, domainName), isBlacklisted = isCaught(blacklistedWebsitesRegexes, domainName);
         const escapedDomain = domainName.replace(/\./, '\\.'); // escape dots
@@ -226,11 +222,11 @@ void (async function () {
             class: `fire-extra-${isBlacklisted ? 'disabled' : 'blacklist'}`
         };
         const domainId = getDomainId(domainName), domainElementLi = document.getElementById(domainId);
-        const watchButton = domainElementLi === null || domainElementLi === void 0 ? void 0 : domainElementLi.querySelector('.fire-extra-watch'), blacklistButton = domainElementLi === null || domainElementLi === void 0 ? void 0 : domainElementLi.querySelector('.fire-extra-blacklist');
-        const watchInfo = domainElementLi === null || domainElementLi === void 0 ? void 0 : domainElementLi.querySelector('.fire-extra-watch-info'), blacklistInfo = domainElementLi === null || domainElementLi === void 0 ? void 0 : domainElementLi.querySelector('.fire-extra-blacklist-info');
+        const watchButton = domainElementLi?.querySelector('.fire-extra-watch'), blacklistButton = domainElementLi?.querySelector('.fire-extra-blacklist');
+        const watchInfo = domainElementLi?.querySelector('.fire-extra-watch-info'), blacklistInfo = domainElementLi?.querySelector('.fire-extra-blacklist-info');
         // add the tooltip to the emojis, e.g. watched: yes, blacklisted: no
-        watchInfo === null || watchInfo === void 0 ? void 0 : watchInfo.setAttribute('fire-tooltip', watch.human);
-        blacklistInfo === null || blacklistInfo === void 0 ? void 0 : blacklistInfo.setAttribute('fire-tooltip', blacklist.human);
+        watchInfo?.setAttribute('fire-tooltip', watch.human);
+        blacklistInfo?.setAttribute('fire-tooltip', blacklist.human);
         // append the tick or the cross (indicated if it should be watched/blacklisted or not)
         if (!watchInfo || !blacklistInfo)
             return;
@@ -255,7 +251,7 @@ void (async function () {
     async function addHtmlToFirePopup() {
         const reportedPostDiv = document.querySelector('.fire-reported-post');
         const fireMetasmokeButton = document.querySelector('.fire-metasmoke-button');
-        const nativeSeLink = [...new URL((fireMetasmokeButton === null || fireMetasmokeButton === void 0 ? void 0 : fireMetasmokeButton.href) || '').searchParams][0][1];
+        const nativeSeLink = [...new URL(fireMetasmokeButton?.href || '').searchParams][0][1];
         const metasmokePostId = fire.reportCache[nativeSeLink].id; // taking advantage of FIRE's cache :)
         const domains = await getAllDomainsFromPost(metasmokePostId);
         if (!domains.length)
@@ -266,8 +262,8 @@ void (async function () {
         const header = document.createElement('h3');
         header.innerText = 'Domains';
         dataWrapperElement.appendChild(header);
-        reportedPostDiv === null || reportedPostDiv === void 0 ? void 0 : reportedPostDiv.insertAdjacentElement('afterend', dataWrapperElement);
-        reportedPostDiv === null || reportedPostDiv === void 0 ? void 0 : reportedPostDiv.insertAdjacentElement('afterend', divider);
+        reportedPostDiv?.insertAdjacentElement('afterend', dataWrapperElement);
+        reportedPostDiv?.insertAdjacentElement('afterend', divider);
         const domainList = document.createElement('ul');
         domainList.classList.add('fire-extra-domains-list');
         // exclude whitelisted domains, redirectors and domains that have a pending PR
@@ -337,12 +333,11 @@ void (async function () {
         dataWrapperElement.appendChild(domainList);
     }
     function updateWatchesAndBlacklists(parsedContent) {
-        var _a, _b;
-        if (!(/SmokeDetector: Auto (?:un)?(?:watch|blacklist) of/.exec(((_a = parsedContent.querySelector('body')) === null || _a === void 0 ? void 0 : _a.innerText) || '')))
+        if (!(/SmokeDetector: Auto (?:un)?(?:watch|blacklist) of/.exec(parsedContent.querySelector('body')?.innerText || '')))
             return;
         try {
             const newRegex = new RegExp(parsedContent.querySelectorAll('code')[1].innerHTML);
-            const anchorInnerHtml = (_b = parsedContent.querySelectorAll('a')) === null || _b === void 0 ? void 0 : _b[1].innerHTML;
+            const anchorInnerHtml = parsedContent.querySelectorAll('a')?.[1].innerHTML;
             const isWatch = Boolean(/Auto\swatch\sof\s/.exec(anchorInnerHtml));
             const isBlacklist = Boolean(/Auto\sblacklist\sof\s/.exec(anchorInnerHtml));
             const isUnwatch = Boolean(/Auto\sunwatch\sof\s/.exec(anchorInnerHtml));
@@ -366,8 +361,7 @@ void (async function () {
         }
     }
     async function updateGithubPullRequestInfo(parsedContent) {
-        var _a;
-        if (!/Closed pull request |Merge pull request|opened by SmokeDetector/.test(((_a = parsedContent.querySelector('body')) === null || _a === void 0 ? void 0 : _a.innerText) || ''))
+        if (!/Closed pull request |Merge pull request|opened by SmokeDetector/.test(parsedContent.querySelector('body')?.innerText || ''))
             return;
         const githubPrsApiCall = await fetch(githubPrApiUrl), githubPrsFromApi = await githubPrsApiCall.json();
         githubPullRequests = getPullRequestDataFromApi(githubPrsFromApi);

@@ -2,7 +2,7 @@
   "compilerOptions": {
     "strict": true,
     "lib": ["DOM", "DOM.iterable", "es2020"],
-    "target": "es2019",
+    "target": "esnext",
     "module": "CommonJS",
     "moduleResolution": "node",
     "noUnusedParameters": true,
