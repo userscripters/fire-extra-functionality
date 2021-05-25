@@ -5,7 +5,7 @@
   "scripts": {
     "build": "npm run lint && tsc && cat src/UserscriptDeclaration.js dist/index.js > dist/fire_extra.user.js",
     "clean": "rm -rf dist",
-    "lint": "eslint src --fix --ext .js,.ts",
+    "lint": "eslint src --fix --ext .ts",
     "test": "mocha"
   },
   "repository": {

@@ -171,9 +171,13 @@ void (async function () {
         return domainStats;
     }
     async function sendActionMessageToChat(messageType, domainOrPrId) {
+        var _a;
         const messageToSend = `!!/${messageType === 'blacklist' ? messageType + '-website' : messageType}- ${domainOrPrId}`
             .replace('approve-', 'approve'); // no need for approve to have a dash
-        const userFkey = document.querySelector('input[name="fkey"]').value;
+        const userFkey = (_a = document.querySelector('input[name="fkey"]')) === null || _a === void 0 ? void 0 : _a.value;
+        toastr.error('Chat fkey not found');
+        if (!userFkey)
+            return; // fkey not found for some reason; chat message cannot be sent
         const params = new FormData();
         params.append('text', messageToSend);
         params.append('fkey', userFkey);
@@ -251,7 +255,7 @@ void (async function () {
     async function addHtmlToFirePopup() {
         const reportedPostDiv = document.querySelector('.fire-reported-post');
         const fireMetasmokeButton = document.querySelector('.fire-metasmoke-button');
-        const nativeSeLink = [...new URL(fireMetasmokeButton === null || fireMetasmokeButton === void 0 ? void 0 : fireMetasmokeButton.href).searchParams][0][1];
+        const nativeSeLink = [...new URL((fireMetasmokeButton === null || fireMetasmokeButton === void 0 ? void 0 : fireMetasmokeButton.href) || '').searchParams][0][1];
         const metasmokePostId = fire.reportCache[nativeSeLink].id; // taking advantage of FIRE's cache :)
         const domains = await getAllDomainsFromPost(metasmokePostId);
         if (!domains.length)
