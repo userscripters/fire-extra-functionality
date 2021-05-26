@@ -172,9 +172,8 @@ void (async function () {
         const messageToSend = `!!/${messageType === 'blacklist' ? messageType + '-website' : messageType}- ${domainOrPrId}`
             .replace('approve-', 'approve'); // no need for approve to have a dash
         const userFkey = document.querySelector('input[name="fkey"]')?.value;
-        toastr.error('Chat fkey not found');
         if (!userFkey)
-            return; // fkey not found for some reason; chat message cannot be sent
+            throw new Error('Chat fkey not found'); // fkey not found for some reason; chat message cannot be sent
         const params = new FormData();
         params.append('text', messageToSend);
         params.append('fkey', userFkey);
