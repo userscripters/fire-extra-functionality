@@ -40,6 +40,7 @@
     "semi": "error",
     "space-in-parens": "off",
     "@typescript-eslint/no-misused-promises": ["error", { "checksVoidReturn": false }],
+    "@typescript-eslint/explicit-function-return-type": "warn",
     "func-call-spacing": "error",
     "no-param-reassign": "error",
     "no-tabs": "error",

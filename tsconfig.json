@@ -3,14 +3,13 @@
     "strict": true,
     "lib": ["DOM", "DOM.iterable", "es2020"],
     "target": "esnext",
-    "module": "CommonJS",
+    "module": "esnext",
     "moduleResolution": "node",
     "noUnusedParameters": true,
     "noUnusedLocals": true,
     "noErrorTruncation": true,
     "downlevelIteration": true,
-    "alwaysStrict": false,
-    "noImplicitUseStrict": true,
+    "removeComments": true,
     "outDir": "dist"
   }
 }
