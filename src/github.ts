@@ -17,9 +17,10 @@ export interface GithubApiInformation {
 const smokeDetectorGithubRepo = 'Charcoal-SE/SmokeDetector';
 const smokeDetectorGithubId = 11063859;
 export const githubPrApiUrl = `https://api.github.com/repos/${smokeDetectorGithubRepo}/pulls`;
-
-// Thanks tripleee! https://github.com/Charcoal-SE/halflife/blob/ab0fa5fc2a048b9e17762ceb6e3472e4d9c65317/halflife.py#L77
-export const whitelistedDomains = GM_getResourceText('whitelisted'), redirectors = GM_getResourceText('redirectors');
+export const whitelisted = 'https://gist.githubusercontent.com/double-beep/db30adf42967187382d2d261bf0a2bc1/raw/whitelisted_domains.txt';
+export const redirectors = 'https://gist.githubusercontent.com/double-beep/ef22d986621ade6cacadae604f20ee59/raw/redirectors.txt';
+export const watchedKeywordsUrl = 'https://raw.githubusercontent.com/Charcoal-SE/SmokeDetector/master/watched_keywords.txt';
+export const blacklistedKeywordsUrl = 'https://raw.githubusercontent.com/Charcoal-SE/SmokeDetector/master/blacklisted_websites.txt';
 
 const getGithubPrUrl = (pullRequestId: number): string => `//github.com/${smokeDetectorGithubRepo}/pull/${pullRequestId}`;
 const getPrTooltip = ({ id, regex, author, type }: GithubApiInformation): string =>

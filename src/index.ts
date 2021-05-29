@@ -104,7 +104,7 @@ async function addHtmlToFirePopup(): Promise<void> {
     domainList.classList.add('fire-extra-domains-list');
 
     // exclude whitelisted domains, redirectors and domains that have a pending PR
-    const domainIdsValid = domains.filter(domainObject => !github.whitelistedDomains.includes(domainObject.domain)
+    const domainIdsValid = domains.filter(domainObject => !Domains.whitelistedDomains.includes(domainObject.domain)
         && !github.redirectors.includes(domainObject.domain)).map(item => item.id);
 
     Domains.triggerDomainUpdate(domainIdsValid)
@@ -119,7 +119,7 @@ async function addHtmlToFirePopup(): Promise<void> {
         domainList.appendChild(domainItem);
 
         // if the domain is whitelisted or a redirector, don't search for TPs/FPs/NAAs. They often have too many hits on SE/MS, and they make the script slower
-        if (github.whitelistedDomains.includes(domainName)) {
+        if (Domains.whitelistedDomains.includes(domainName)) {
             domainItem.insertAdjacentHTML('beforeend', '<span class="fire-extra-tag">#whitelisted</span>');
             return;
         } else if (github.redirectors.includes(domainName)) {

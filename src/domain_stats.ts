@@ -27,24 +27,35 @@ export class Domains {
     public static watchedWebsitesRegexes: RegExp[];
     public static blacklistedWebsitesRegexes: RegExp[];
     public static githubPullRequests: github.GithubApiInformation[];
+    public static whitelistedDomains: string;
+    public static redirectors: string;
 
     public static async fetchAllDomainInformation(): Promise<void> {
         // nothing to do; all information is successfully fetched
         if (this.watchedWebsitesRegexes && this.blacklistedWebsitesRegexes && this.githubPullRequests) return;
         // Those files are frequently updated, so they can't be in @resources
-        const [watchedWebsitesCall, blacklistedWebsitesCall, githubPrsCall] = await Promise.all([
-            fetch('https://raw.githubusercontent.com/Charcoal-SE/SmokeDetector/master/watched_keywords.txt'),
-            fetch('https://raw.githubusercontent.com/Charcoal-SE/SmokeDetector/master/blacklisted_websites.txt'),
-            fetch(github.githubPrApiUrl)
+        // Thanks tripleee! https://github.com/Charcoal-SE/halflife/blob/ab0fa5fc2a048b9e17762ceb6e3472e4d9c65317/halflife.py#L77
+        const [
+            watchedWebsitesCall, blacklistedWebsitesCall, githubPrsCall, whitelistedDomainsCall, redirectorsCall
+        ] = await Promise.all([
+            fetch(github.watchedKeywordsUrl),
+            fetch(github.blacklistedKeywordsUrl),
+            fetch(github.githubPrApiUrl),
+            fetch(github.whitelisted),
+            fetch(github.redirectors)
         ]);
-        const [watchedWebsites, blacklistedWebsites, githubPrs] = await Promise.all([
+        const [watchedWebsites, blacklistedWebsites, githubPrs, whitelistedDomains, redirectors] = await Promise.all([
             watchedWebsitesCall.text(),
             blacklistedWebsitesCall.text(),
-            githubPrsCall.json() as Promise<github.GithubApiResponse[]>
+            githubPrsCall.json() as Promise<github.GithubApiResponse[]>,
+            whitelistedDomainsCall.text(),
+            redirectorsCall.text()
         ]);
         this.watchedWebsitesRegexes = github.getRegexesFromTxtFile(watchedWebsites, 2);
         this.blacklistedWebsitesRegexes = github.getRegexesFromTxtFile(blacklistedWebsites, 0);
         this.githubPullRequests = github.getPullRequestDataFromApi(githubPrs);
+        this.whitelistedDomains = whitelistedDomains;
+        this.redirectors = redirectors;
     }
 
     public static async getTpFpNaaCountFromDomains(domainIds: number[]): Promise<MetasmokeDomainStats> {
