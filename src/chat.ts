@@ -23,16 +23,28 @@ type MessageActions = 'watch' | 'blacklist' | 'approve';
 
 const charcoalRoomId = 11540;
 // Copied from FIRE
-const smokeDetectorId = {
-    'chat.stackexchange.com': 120914,
-    'chat.stackoverflow.com': 3735529,
-    'chat.meta.stackexchange.com': 266345
-}[location.host];
-const metasmokeId = {
-    'chat.stackexchange.com': 478536,
-    'chat.stackoverflow.com': 14262788,
-    'chat.meta.stackexchange.com': 848503
-}[location.host];
+type HostGetter = {
+  (): string;
+  host?: string;
+};
+
+const getHost: HostGetter = () =>
+  getHost.host || (getHost.host = globalThis.location.host);
+
+// Copied from FIRE
+const getSmokeDetectorId = () =>
+  ({
+    "chat.stackexchange.com": 120914,
+    "chat.stackoverflow.com": 3735529,
+    "chat.meta.stackexchange.com": 266345,
+  }[getHost()]);
+
+const getMetasmokeId = () =>
+  ({
+    "chat.stackexchange.com": 478536,
+    "chat.stackoverflow.com": 14262788,
+    "chat.meta.stackexchange.com": 848503,
+  }[getHost()]);
 
 async function sendActionMessageToChat(messageType: MessageActions, domainOrPrId: string | number): Promise<void> {
     const messageToSend = `!!/${messageType === 'blacklist' ? messageType + '-website' : messageType}- ${domainOrPrId}`
@@ -96,7 +108,7 @@ function updateWatchesAndBlacklists(parsedContent: Document): void {
 }
 
 export async function newChatEventOccurred({ event_type, user_id, content }: ChatEvent): Promise<void> {
-    if ((user_id !== smokeDetectorId && user_id !== metasmokeId) || event_type !== 1) return;
+    if ((user_id !== getSmokeDetectorId() && user_id !== getMetasmokeId()) || event_type !== 1) return;
     const parsedContent = new DOMParser().parseFromString(content, 'text/html');
     updateWatchesAndBlacklists(parsedContent);
     const newGithubPrInfo = await github.getUpdatedGithubPullRequestInfo(parsedContent);
