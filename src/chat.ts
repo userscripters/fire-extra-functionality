@@ -1,5 +1,6 @@
-import { Toastr, watchedWebsitesRegexes, blacklistedWebsitesRegexes, githubPullRequests } from './index';
+import { Toastr } from './index';
 import * as github from './github';
+import { Domains } from './domain_stats';
 
 declare const toastr: Toastr;
 
@@ -76,24 +77,18 @@ function updateWatchesAndBlacklists(parsedContent: Document): void {
         const isWatch = Boolean(/Auto\swatch\sof\s/.exec(anchorInnerHtml));
         const isBlacklist = Boolean(/Auto\sblacklist\sof\s/.exec(anchorInnerHtml));
         const isUnwatch = Boolean(/Auto\sunwatch\sof\s/.exec(anchorInnerHtml));
-        const isUnblacklist = Boolean(/Auto\sunblacklist\sof\s/.exec(anchorInnerHtml));
+        const isUnblacklist = Boolean(/Auto\sunblacklist\sof/.exec(anchorInnerHtml));
 
         if (isWatch) {
-            watchedWebsitesRegexes.push(newRegex);
+            Domains.watchedWebsitesRegexes.push(newRegex);
         } else if (isBlacklist) {
-            // use this trick to avoid reassigning and an error on the webpack-compiled file
-            const newObjectArray = watchedWebsitesRegexes.filter(regex => regex.toString() !== newRegex.toString());
-            Object.keys(watchedWebsitesRegexes).forEach(key => delete watchedWebsitesRegexes[Number(key)]);
-            watchedWebsitesRegexes.push(...newObjectArray);
-            blacklistedWebsitesRegexes.push(newRegex); // if it is a blacklist, also remove the item from the watchlist
+            Domains.watchedWebsitesRegexes = Domains.watchedWebsitesRegexes.filter(regex => regex.toString() !== newRegex.toString());
+            Domains.blacklistedWebsitesRegexes.push(newRegex);
+            Domains.blacklistedWebsitesRegexes.push(newRegex); // if it is a blacklist, also remove the item from the watchlist
         } else if (isUnwatch) {
-            const newObjectArray = watchedWebsitesRegexes.filter(regex => regex.toString() !== newRegex.toString());
-            Object.keys(watchedWebsitesRegexes).forEach(key => delete watchedWebsitesRegexes[Number(key)]);
-            watchedWebsitesRegexes.push(...newObjectArray);
+            Domains.watchedWebsitesRegexes = Domains.watchedWebsitesRegexes.filter(regex => regex.toString() !== newRegex.toString());
         } else if (isUnblacklist) {
-            const newObjectArray = blacklistedWebsitesRegexes.filter(regex => regex.toString() !== newRegex.toString());
-            Object.keys(blacklistedWebsitesRegexes).forEach(key => delete blacklistedWebsitesRegexes[Number(key)]);
-            blacklistedWebsitesRegexes.push(...newObjectArray);
+            Domains.blacklistedWebsitesRegexes = Domains.blacklistedWebsitesRegexes.filter(regex => regex.toString() !== newRegex.toString());
         }
     } catch (error) {
         return;
@@ -106,6 +101,5 @@ export async function newChatEventOccurred({ event_type, user_id, content }: Cha
     updateWatchesAndBlacklists(parsedContent);
     const newGithubPrInfo = await github.getUpdatedGithubPullRequestInfo(parsedContent);
     if (!newGithubPrInfo) return;
-    Object.keys(githubPullRequests).forEach(key => delete githubPullRequests[Number(key)]);
-    githubPullRequests.push(...newGithubPrInfo);
+    Domains.githubPullRequests = newGithubPrInfo;
 }

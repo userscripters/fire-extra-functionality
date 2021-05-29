@@ -2,7 +2,7 @@ import * as github from './github';
 import * as metasmoke from './metasmoke';
 import * as chat from './chat';
 import * as stackexchange from './stackexchange';
-import * as domainStats from './domain_stats';
+import { Domains } from './domain_stats';
 
 export interface Toastr {
     success(message: string): void;
@@ -36,13 +36,13 @@ const isCaught = (regexesArray: RegExp[], domain: string): boolean => regexesArr
 export const getDomainId = (domainName: string): string => `fire-extra-${domainName.replace(/\./g, '-')}`;
 
 function updateDomainInformation(domainName: string): void {
-    const seResultCount = domainStats.allDomainInformation[domainName]?.stackexchange;
-    const metasmokeStats = domainStats.allDomainInformation[domainName]?.metasmoke;
+    const seResultCount = Domains.allDomainInformation[domainName]?.stackexchange;
+    const metasmokeStats = Domains.allDomainInformation[domainName]?.metasmoke;
     // the SE hits might be zero, so using !hits returns true!!
     if ((!seResultCount && seResultCount !== '0') || !metasmokeStats?.length) return;
 
-    const isWatched = isCaught(watchedWebsitesRegexes, domainName);
-    const isBlacklisted = isCaught(blacklistedWebsitesRegexes, domainName);
+    const isWatched = isCaught(Domains.watchedWebsitesRegexes, domainName);
+    const isBlacklisted = isCaught(Domains.blacklistedWebsitesRegexes, domainName);
     const escapedDomain = domainName.replace(/\./, '\\.'); // escape dots
     const watch = {
         human: 'watched: ' + (isWatched ? 'yes' : 'no'),
@@ -107,12 +107,12 @@ async function addHtmlToFirePopup(): Promise<void> {
     const domainIdsValid = domains.filter(domainObject => !github.whitelistedDomains.includes(domainObject.domain)
         && !github.redirectors.includes(domainObject.domain)).map(item => item.id);
 
-    domainStats.triggerDomainUpdate(domainIdsValid)
+    Domains.triggerDomainUpdate(domainIdsValid)
         .then(domainNames => domainNames.forEach(domainName => updateDomainInformation(domainName)))
         .catch(error => toastr.error(error));
 
     domains.map(item => item.domain).forEach(domainName => {
-        domainStats.allDomainInformation[domainName] = {} as { metasmoke: number[]; stackexchange: string; };
+        Domains.allDomainInformation[domainName] = {} as { metasmoke: number[]; stackexchange: string; };
         const domainItem = document.createElement('li');
         domainItem.innerHTML = domainName + '&nbsp;';
         domainItem.id = getDomainId(domainName);
@@ -127,7 +127,7 @@ async function addHtmlToFirePopup(): Promise<void> {
             return;
         }
 
-        const githubPrOpenItem = githubPullRequests.find(item => item.regex.test(domainName));
+        const githubPrOpenItem = Domains.githubPullRequests.find(item => item.regex.test(domainName));
         const escapedDomain = domainName.replace(/\./g, '\\.'); // escape dots
         // use a function in case githubPrOpenItem is null (then it'd throw an error because we use .id)
         const watchBlacklistButtons = '<a class="fire-extra-watch">!!/watch</a>&nbsp;&nbsp;<a class="fire-extra-blacklist">!!/blacklist</a>&nbsp;&nbsp;';
@@ -146,7 +146,7 @@ async function addHtmlToFirePopup(): Promise<void> {
             const domainElementLi = document.getElementById(getDomainId(domainName));
             if (!domainElementLi) return; // in case the popup is closed before the request is finished
 
-            domainStats.allDomainInformation[domainName].stackexchange = hitCount;
+            Domains.allDomainInformation[domainName].stackexchange = hitCount;
             const seHitCountElement = domainElementLi.querySelector('.fire-extra-se-results a');
             if (!seHitCountElement) return;
 
@@ -165,22 +165,9 @@ async function addHtmlToFirePopup(): Promise<void> {
     dataWrapperElement.appendChild(domainList);
 }
 
-// Those files are frequently updated, so they can't be in @resources
-const [watchedWebsitesCall, blacklistedWebsitesCall, githubPrsCall] = await Promise.all([
-    fetch('https://raw.githubusercontent.com/Charcoal-SE/SmokeDetector/master/watched_keywords.txt'),
-    fetch('https://raw.githubusercontent.com/Charcoal-SE/SmokeDetector/master/blacklisted_websites.txt'),
-    fetch(github.githubPrApiUrl)
-]);
-const [watchedWebsites, blacklistedWebsites, githubPrs] = await Promise.all([
-    watchedWebsitesCall.text(),
-    blacklistedWebsitesCall.text(),
-    githubPrsCall.json() as Promise<github.GithubApiResponse[]>
-]);
-export const watchedWebsitesRegexes = github.getRegexesFromTxtFile(watchedWebsites, 2);
-export const blacklistedWebsitesRegexes = github.getRegexesFromTxtFile(blacklistedWebsites, 0);
-export const githubPullRequests = github.getPullRequestDataFromApi(githubPrs);
-(function(): void {
+void (async function(): Promise<void> {
     CHAT.addEventHandlerHook(chat.newChatEventOccurred);
+    await Domains.fetchAllDomainInformation();
     window.addEventListener('fire-popup-appeared', addHtmlToFirePopup);
     GM_addStyle(`
 .fire-extra-domains-list {

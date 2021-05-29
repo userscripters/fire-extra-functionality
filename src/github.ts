@@ -7,7 +7,7 @@ export interface GithubApiResponse {
     }
 }
 
-interface GithubApiInformation {
+export interface GithubApiInformation {
     id: number;
     regex: RegExp;
     author: string;
