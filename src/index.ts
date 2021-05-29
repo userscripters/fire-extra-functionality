@@ -1,8 +1,8 @@
-import * as github from './github';
-import * as metasmoke from './metasmoke';
-import * as chat from './chat';
-import * as stackexchange from './stackexchange';
-import { Domains } from './domain_stats';
+import * as github from './github.js';
+import * as metasmoke from './metasmoke.js';
+import * as chat from './chat.js';
+import * as stackexchange from './stackexchange.js';
+import { Domains } from './domain_stats.js';
 
 export interface Toastr {
     success(message: string): void;

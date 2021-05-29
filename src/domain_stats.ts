@@ -1,6 +1,6 @@
-import * as metasmoke from './metasmoke';
-import * as github from './github';
-import { Toastr, getDomainId } from './index';
+import * as metasmoke from './metasmoke.js';
+import * as github from './github.js';
+import { Toastr, getDomainId } from './index.js';
 
 declare const toastr: Toastr;
 interface MetasmokeDomainStats {
