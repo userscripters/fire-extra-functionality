@@ -21,7 +21,7 @@ interface ChatResponse {
 
 type MessageActions = 'watch' | 'blacklist' | 'approve';
 
-const currentRoomId = Number((/\/rooms\/(\d+)\//.exec(window.location.pathname))?.[1]);
+const charcoalRoomId = 11540;
 // Copied from FIRE
 const smokeDetectorId = {
     'chat.stackexchange.com': 120914,
@@ -44,7 +44,7 @@ async function sendActionMessageToChat(messageType: MessageActions, domainOrPrId
     params.append('text', messageToSend);
     params.append('fkey', userFkey);
 
-    const chatNewMessageCall = await fetch(`/chats/${currentRoomId}/messages/new`, {
+    const chatNewMessageCall = await fetch(`/chats/${charcoalRoomId}/messages/new`, {
         method: 'POST',
         body: params
     });
