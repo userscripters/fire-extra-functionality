@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        FIRE Additional Functionality
-// @version     1.3.1
+// @version     1.3.2
 // @author      double-beep
 // @contributor Xnero
 // @match       https://chat.stackexchange.com/rooms/11540/charcoal-hq
@@ -415,7 +415,8 @@ const getColouredSpan = (feedbackCount, feedback) => `<span class="fire-extra-${
 const getColouredSpans = ([tpCount, fpCount, naaCount]) => `${getColouredSpan(tpCount, 'tp')}, ${getColouredSpan(fpCount, 'fp')}, ${getColouredSpan(naaCount, 'naa')}`;
 class Domains {
     static async fetchAllDomainInformation() {
-        if (this.watchedWebsitesRegexes && this.blacklistedWebsitesRegexes && this.githubPullRequests)
+        if (this.watchedWebsitesRegexes && this.blacklistedWebsitesRegexes && this.githubPullRequests
+            && this.whitelistedDomains && this.redirectors)
             return;
         const [watchedWebsitesCall, blacklistedWebsitesCall, githubPrsCall, whitelistedDomainsCall, redirectorsCall] = await Promise.all([
             fetch(github.watchedKeywordsUrl),
@@ -436,7 +437,6 @@ class Domains {
         this.githubPullRequests = github.getPullRequestDataFromApi(githubPrs);
         this.whitelistedDomains = whitelistedDomains;
         this.redirectors = redirectors;
-        return [this.watchedWebsitesRegexes, this.blacklistedWebsitesRegexes, this.githubPullRequests, whitelistedDomains, redirectors];
     }
     static async getTpFpNaaCountFromDomains(domainIds) {
         if (!domainIds.length)

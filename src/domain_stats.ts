@@ -30,9 +30,10 @@ export class Domains {
     public static whitelistedDomains: string;
     public static redirectors: string;
 
-    public static async fetchAllDomainInformation(): Promise<(string | RegExp[] | github.GithubApiInformation[])[] | undefined> {
+    public static async fetchAllDomainInformation(): Promise<void> {
         // nothing to do; all information is successfully fetched
-        if (this.watchedWebsitesRegexes && this.blacklistedWebsitesRegexes && this.githubPullRequests) return;
+        if (this.watchedWebsitesRegexes && this.blacklistedWebsitesRegexes && this.githubPullRequests
+            && this.whitelistedDomains && this.redirectors) return;
         // Those files are frequently updated, so they can't be in @resources
         // Thanks tripleee! https://github.com/Charcoal-SE/halflife/blob/ab0fa5fc2a048b9e17762ceb6e3472e4d9c65317/halflife.py#L77
         const [
@@ -56,7 +57,6 @@ export class Domains {
         this.githubPullRequests = github.getPullRequestDataFromApi(githubPrs);
         this.whitelistedDomains = whitelistedDomains;
         this.redirectors = redirectors;
-        return [this.watchedWebsitesRegexes, this.blacklistedWebsitesRegexes, this.githubPullRequests, whitelistedDomains, redirectors];
     }
 
     public static async getTpFpNaaCountFromDomains(domainIds: number[]): Promise<MetasmokeDomainStats> {
