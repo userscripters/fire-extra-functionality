@@ -30,7 +30,7 @@ export class Domains {
     public static whitelistedDomains: string;
     public static redirectors: string;
 
-    public static async fetchAllDomainInformation(): Promise<void> {
+    public static async fetchAllDomainInformation(): Promise<(string | RegExp[] | github.GithubApiInformation[])[] | undefined> {
         // nothing to do; all information is successfully fetched
         if (this.watchedWebsitesRegexes && this.blacklistedWebsitesRegexes && this.githubPullRequests) return;
         // Those files are frequently updated, so they can't be in @resources
@@ -56,6 +56,7 @@ export class Domains {
         this.githubPullRequests = github.getPullRequestDataFromApi(githubPrs);
         this.whitelistedDomains = whitelistedDomains;
         this.redirectors = redirectors;
+        return [this.watchedWebsitesRegexes, this.blacklistedWebsitesRegexes, this.githubPullRequests, whitelistedDomains, redirectors];
     }
 
     public static async getTpFpNaaCountFromDomains(domainIds: number[]): Promise<MetasmokeDomainStats> {
