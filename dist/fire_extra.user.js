@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        FIRE Additional Functionality
-// @version     undefined
+// @version     1.3.1
 // @author      double-beep
 // @contributor Xnero
 // @match       https://chat.stackexchange.com/rooms/11540/charcoal-hq
@@ -31,42 +31,43 @@
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getDomainId = void 0;
+exports.indexHelpers = void 0;
 const github = __webpack_require__(1);
 const metasmoke = __webpack_require__(2);
 const chat = __webpack_require__(3);
 const stackexchange = __webpack_require__(5);
-const domain_stats_js_1 = __webpack_require__(4);
+const domain_stats_1 = __webpack_require__(4);
 const metasmokeSearchUrl = 'https://metasmoke.erwaysoftware.com/search';
 const waitGifHtml = '<img class="fire-extra-wait" src="/content/img/progress-dots.gif">';
 const greenTick = '<span class="fire-extra-green"> ✓</span>', redCross = '<span class="fire-extra-red"> ✗</span>';
-const getMetasmokeSearchUrl = (domain) => encodeURI(`${metasmokeSearchUrl}?utf8=✓&body_is_regex=1&body=(?s:\\b${domain}\\b)`);
-const qualifiesForWatch = ([tpCount, fpCount, naaCount], seHits) => tpCount >= 1 && tpCount < 5 && fpCount + naaCount === 0 && Number(seHits) < 10;
-const qualifiesForBlacklist = ([tpCount, fpCount, naaCount], seHits) => tpCount >= 5 && fpCount + naaCount === 0 && Number(seHits) < 5;
-const isCaught = (regexesArray, domain) => regexesArray.some(regex => regex.test(domain));
-const getDomainId = (domainName) => `fire-extra-${domainName.replace(/\./g, '-')}`;
-exports.getDomainId = getDomainId;
+exports.indexHelpers = {
+    getMetasmokeSearchUrl: (domain) => encodeURI(`${metasmokeSearchUrl}?utf8=✓&body_is_regex=1&body=(?s:\\b${domain}\\b)`),
+    qualifiesForWatch: ([tpCount, fpCount, naaCount], seHits) => tpCount >= 1 && tpCount < 5 && fpCount + naaCount === 0 && Number(seHits) < 10,
+    qualifiesForBlacklist: ([tpCount, fpCount, naaCount], seHits) => tpCount >= 5 && fpCount + naaCount === 0 && Number(seHits) < 5,
+    isCaught: (regexesArray, domain) => regexesArray.some(regex => regex.test(domain)),
+    getDomainId: (domainName) => `fire-extra-${domainName.replace(/\./g, '-')}`
+};
 function updateDomainInformation(domainName) {
-    const seResultCount = domain_stats_js_1.Domains.allDomainInformation[domainName]?.stackexchange;
-    const metasmokeStats = domain_stats_js_1.Domains.allDomainInformation[domainName]?.metasmoke;
+    const seResultCount = domain_stats_1.Domains.allDomainInformation[domainName]?.stackexchange;
+    const metasmokeStats = domain_stats_1.Domains.allDomainInformation[domainName]?.metasmoke;
     if ((!seResultCount && seResultCount !== '0') || !metasmokeStats?.length)
         return;
-    const isWatched = isCaught(domain_stats_js_1.Domains.watchedWebsitesRegexes, domainName);
-    const isBlacklisted = isCaught(domain_stats_js_1.Domains.blacklistedWebsitesRegexes, domainName);
+    const isWatched = exports.indexHelpers.isCaught(domain_stats_1.Domains.watchedWebsitesRegexes, domainName);
+    const isBlacklisted = exports.indexHelpers.isCaught(domain_stats_1.Domains.blacklistedWebsitesRegexes, domainName);
     const escapedDomain = domainName.replace(/\./, '\\.');
     const watch = {
         human: 'watched: ' + (isWatched ? 'yes' : 'no'),
         tooltip: isWatched || isBlacklisted ? 'domain already watched' : `!!/watch- ${escapedDomain}`,
-        suggested: qualifiesForWatch(metasmokeStats, seResultCount) && !isWatched && !isBlacklisted,
+        suggested: exports.indexHelpers.qualifiesForWatch(metasmokeStats, seResultCount) && !isWatched && !isBlacklisted,
         class: `fire-extra-${isWatched || isBlacklisted ? 'disabled' : 'watch'}`
     };
     const blacklist = {
         human: 'blacklisted: ' + (isBlacklisted ? 'yes' : 'no'),
         tooltip: isBlacklisted ? 'domain already blacklisted' : `!!/blacklist-website- ${escapedDomain}`,
-        suggested: qualifiesForBlacklist(metasmokeStats, seResultCount) && !isBlacklisted,
+        suggested: exports.indexHelpers.qualifiesForBlacklist(metasmokeStats, seResultCount) && !isBlacklisted,
         class: `fire-extra-${isBlacklisted ? 'disabled' : 'blacklist'}`
     };
-    const domainId = exports.getDomainId(domainName), domainElementLi = document.getElementById(domainId);
+    const domainId = exports.indexHelpers.getDomainId(domainName), domainElementLi = document.getElementById(domainId);
     const watchButton = domainElementLi?.querySelector('.fire-extra-watch'), blacklistButton = domainElementLi?.querySelector('.fire-extra-blacklist');
     const watchInfo = domainElementLi?.querySelector('.fire-extra-watch-info'), blacklistInfo = domainElementLi?.querySelector('.fire-extra-blacklist-info');
     watchInfo?.setAttribute('fire-tooltip', watch.human);
@@ -106,18 +107,18 @@ async function addHtmlToFirePopup() {
     reportedPostDiv?.insertAdjacentElement('afterend', divider);
     const domainList = document.createElement('ul');
     domainList.classList.add('fire-extra-domains-list');
-    const domainIdsValid = domains.filter(domainObject => !github.whitelistedDomains.includes(domainObject.domain)
+    const domainIdsValid = domains.filter(domainObject => !domain_stats_1.Domains.whitelistedDomains.includes(domainObject.domain)
         && !github.redirectors.includes(domainObject.domain)).map(item => item.id);
-    domain_stats_js_1.Domains.triggerDomainUpdate(domainIdsValid)
+    domain_stats_1.Domains.triggerDomainUpdate(domainIdsValid)
         .then(domainNames => domainNames.forEach(domainName => updateDomainInformation(domainName)))
         .catch(error => toastr.error(error));
     domains.map(item => item.domain).forEach(domainName => {
-        domain_stats_js_1.Domains.allDomainInformation[domainName] = {};
+        domain_stats_1.Domains.allDomainInformation[domainName] = {};
         const domainItem = document.createElement('li');
         domainItem.innerHTML = domainName + '&nbsp;';
-        domainItem.id = exports.getDomainId(domainName);
+        domainItem.id = exports.indexHelpers.getDomainId(domainName);
         domainList.appendChild(domainItem);
-        if (github.whitelistedDomains.includes(domainName)) {
+        if (domain_stats_1.Domains.whitelistedDomains.includes(domainName)) {
             domainItem.insertAdjacentHTML('beforeend', '<span class="fire-extra-tag">#whitelisted</span>');
             return;
         }
@@ -125,22 +126,23 @@ async function addHtmlToFirePopup() {
             domainItem.insertAdjacentHTML('beforeend', '<span class="fire-extra-tag">#redirector</span>');
             return;
         }
-        const githubPrOpenItem = domain_stats_js_1.Domains.githubPullRequests.find(item => item.regex.test(domainName));
+        const githubPrOpenItem = domain_stats_1.Domains.githubPullRequests.find(item => item.regex.test(domainName));
         const escapedDomain = domainName.replace(/\./g, '\\.');
         const watchBlacklistButtons = '<a class="fire-extra-watch">!!/watch</a>&nbsp;&nbsp;<a class="fire-extra-blacklist">!!/blacklist</a>&nbsp;&nbsp;';
         const actionsAreaHtml = githubPrOpenItem ? github.getPendingPrHtml(githubPrOpenItem) : watchBlacklistButtons;
+        const msSearchUrl = exports.indexHelpers.getMetasmokeSearchUrl(escapedDomain);
         domainItem.insertAdjacentHTML('beforeend', `(
-           <a href="${getMetasmokeSearchUrl(escapedDomain)}">MS</a>: <span class="fire-extra-ms-stats">${waitGifHtml}</span>&nbsp;
+           <a href="${msSearchUrl}">MS</a>: <span class="fire-extra-ms-stats">${waitGifHtml}</span>&nbsp;
          |&nbsp;
            <span class="fire-extra-se-results"><a href="${stackexchange.seSearchPage}${domainName}">${waitGifHtml}</a></span>
          )&nbsp;&nbsp;${actionsAreaHtml}
          (<span class="fire-extra-watch-info">👀: ${waitGifHtml}</span>/<span class="fire-extra-blacklist-info">🚫: ${waitGifHtml}</span>)`
             .replace(/^\s+/mg, '').replace(/\n/g, ''));
         stackexchange.getSeSearchResultsForDomain(domainName).then(hitCount => {
-            const domainElementLi = document.getElementById(exports.getDomainId(domainName));
+            const domainElementLi = document.getElementById(exports.indexHelpers.getDomainId(domainName));
             if (!domainElementLi)
                 return;
-            domain_stats_js_1.Domains.allDomainInformation[domainName].stackexchange = hitCount;
+            domain_stats_1.Domains.allDomainInformation[domainName].stackexchange = hitCount;
             const seHitCountElement = domainElementLi.querySelector('.fire-extra-se-results a');
             if (!seHitCountElement)
                 return;
@@ -159,7 +161,7 @@ async function addHtmlToFirePopup() {
 }
 void (async function () {
     CHAT.addEventHandlerHook(chat.newChatEventOccurred);
-    await domain_stats_js_1.Domains.fetchAllDomainInformation();
+    await domain_stats_1.Domains.fetchAllDomainInformation();
     window.addEventListener('fire-popup-appeared', addHtmlToFirePopup);
     GM_addStyle(`
 .fire-extra-domains-list {
@@ -198,11 +200,14 @@ void (async function () {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getUpdatedGithubPullRequestInfo = exports.getPullRequestDataFromApi = exports.getRegexesFromTxtFile = exports.getPendingPrHtml = exports.redirectors = exports.whitelistedDomains = exports.githubPrApiUrl = void 0;
+exports.getUpdatedGithubPullRequestInfo = exports.getPullRequestDataFromApi = exports.getRegexesFromTxtFile = exports.getPendingPrHtml = exports.blacklistedKeywordsUrl = exports.watchedKeywordsUrl = exports.redirectors = exports.whitelisted = exports.githubPrApiUrl = void 0;
 const smokeDetectorGithubRepo = 'Charcoal-SE/SmokeDetector';
 const smokeDetectorGithubId = 11063859;
 exports.githubPrApiUrl = `https://api.github.com/repos/${smokeDetectorGithubRepo}/pulls`;
-exports.whitelistedDomains = GM_getResourceText('whitelisted'), exports.redirectors = GM_getResourceText('redirectors');
+exports.whitelisted = 'https://gist.githubusercontent.com/double-beep/db30adf42967187382d2d261bf0a2bc1/raw/whitelisted_domains.txt';
+exports.redirectors = 'https://gist.githubusercontent.com/double-beep/ef22d986621ade6cacadae604f20ee59/raw/redirectors.txt';
+exports.watchedKeywordsUrl = 'https://raw.githubusercontent.com/Charcoal-SE/SmokeDetector/master/watched_keywords.txt';
+exports.blacklistedKeywordsUrl = 'https://raw.githubusercontent.com/Charcoal-SE/SmokeDetector/master/blacklisted_websites.txt';
 const getGithubPrUrl = (pullRequestId) => `//github.com/${smokeDetectorGithubRepo}/pull/${pullRequestId}`;
 const getPrTooltip = ({ id, regex, author, type }) => `${author} wants to ${type} ${regex.source} in PR#${id}`;
 const getPendingPrHtml = (githubPrOpenItem) => `<a href=${getGithubPrUrl(githubPrOpenItem.id)} fire-tooltip="${getPrTooltip(githubPrOpenItem)}">PR#${githubPrOpenItem.id}</a>`
@@ -312,7 +317,7 @@ exports.getAllDomainsFromPost = getAllDomainsFromPost;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.newChatEventOccurred = exports.addActionListener = void 0;
 const github = __webpack_require__(1);
-const domain_stats_js_1 = __webpack_require__(4);
+const domain_stats_1 = __webpack_require__(4);
 const charcoalRoomId = 11540;
 const smokedetectorId = 120914;
 const metasmokeId = 478536;
@@ -361,18 +366,18 @@ function updateWatchesAndBlacklists(parsedContent) {
         const isUnwatch = Boolean(/Auto\sunwatch\sof\s/.exec(anchorInnerHtml));
         const isUnblacklist = Boolean(/Auto\sunblacklist\sof/.exec(anchorInnerHtml));
         if (isWatch) {
-            domain_stats_js_1.Domains.watchedWebsitesRegexes.push(newRegex);
+            domain_stats_1.Domains.watchedWebsitesRegexes.push(newRegex);
         }
         else if (isBlacklist) {
-            domain_stats_js_1.Domains.watchedWebsitesRegexes = domain_stats_js_1.Domains.watchedWebsitesRegexes.filter(regex => regex.toString() !== newRegex.toString());
-            domain_stats_js_1.Domains.blacklistedWebsitesRegexes.push(newRegex);
-            domain_stats_js_1.Domains.blacklistedWebsitesRegexes.push(newRegex);
+            domain_stats_1.Domains.watchedWebsitesRegexes = domain_stats_1.Domains.watchedWebsitesRegexes.filter(regex => regex.toString() !== newRegex.toString());
+            domain_stats_1.Domains.blacklistedWebsitesRegexes.push(newRegex);
+            domain_stats_1.Domains.blacklistedWebsitesRegexes.push(newRegex);
         }
         else if (isUnwatch) {
-            domain_stats_js_1.Domains.watchedWebsitesRegexes = domain_stats_js_1.Domains.watchedWebsitesRegexes.filter(regex => regex.toString() !== newRegex.toString());
+            domain_stats_1.Domains.watchedWebsitesRegexes = domain_stats_1.Domains.watchedWebsitesRegexes.filter(regex => regex.toString() !== newRegex.toString());
         }
         else if (isUnblacklist) {
-            domain_stats_js_1.Domains.blacklistedWebsitesRegexes = domain_stats_js_1.Domains.blacklistedWebsitesRegexes.filter(regex => regex.toString() !== newRegex.toString());
+            domain_stats_1.Domains.blacklistedWebsitesRegexes = domain_stats_1.Domains.blacklistedWebsitesRegexes.filter(regex => regex.toString() !== newRegex.toString());
         }
     }
     catch (error) {
@@ -387,7 +392,7 @@ async function newChatEventOccurred({ event_type, user_id, content }) {
     const newGithubPrInfo = await github.getUpdatedGithubPullRequestInfo(parsedContent);
     if (!newGithubPrInfo)
         return;
-    domain_stats_js_1.Domains.githubPullRequests = newGithubPrInfo;
+    domain_stats_1.Domains.githubPullRequests = newGithubPrInfo;
 }
 exports.newChatEventOccurred = newChatEventOccurred;
 
@@ -401,7 +406,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Domains = void 0;
 const metasmoke = __webpack_require__(2);
 const github = __webpack_require__(1);
-const index_js_1 = __webpack_require__(0);
+const index_1 = __webpack_require__(0);
 const getColouredSpan = (feedbackCount, feedback) => `<span class="fire-extra-${feedback}" fire-tooltip=${feedback.toUpperCase()}>${feedbackCount}</span>`;
 const getColouredSpans = ([tpCount, fpCount, naaCount]) => `${getColouredSpan(tpCount, 'tp')}, ${getColouredSpan(fpCount, 'fp')}, ${getColouredSpan(naaCount, 'naa')}`;
 class Domains {
@@ -409,22 +414,30 @@ class Domains {
     static watchedWebsitesRegexes;
     static blacklistedWebsitesRegexes;
     static githubPullRequests;
+    static whitelistedDomains;
+    static redirectors;
     static async fetchAllDomainInformation() {
         if (this.watchedWebsitesRegexes && this.blacklistedWebsitesRegexes && this.githubPullRequests)
             return;
-        const [watchedWebsitesCall, blacklistedWebsitesCall, githubPrsCall] = await Promise.all([
-            fetch('https://raw.githubusercontent.com/Charcoal-SE/SmokeDetector/master/watched_keywords.txt'),
-            fetch('https://raw.githubusercontent.com/Charcoal-SE/SmokeDetector/master/blacklisted_websites.txt'),
-            fetch(github.githubPrApiUrl)
+        const [watchedWebsitesCall, blacklistedWebsitesCall, githubPrsCall, whitelistedDomainsCall, redirectorsCall] = await Promise.all([
+            fetch(github.watchedKeywordsUrl),
+            fetch(github.blacklistedKeywordsUrl),
+            fetch(github.githubPrApiUrl),
+            fetch(github.whitelisted),
+            fetch(github.redirectors)
         ]);
-        const [watchedWebsites, blacklistedWebsites, githubPrs] = await Promise.all([
+        const [watchedWebsites, blacklistedWebsites, githubPrs, whitelistedDomains, redirectors] = await Promise.all([
             watchedWebsitesCall.text(),
             blacklistedWebsitesCall.text(),
-            githubPrsCall.json()
+            githubPrsCall.json(),
+            whitelistedDomainsCall.text(),
+            redirectorsCall.text()
         ]);
         this.watchedWebsitesRegexes = github.getRegexesFromTxtFile(watchedWebsites, 2);
         this.blacklistedWebsitesRegexes = github.getRegexesFromTxtFile(blacklistedWebsites, 0);
         this.githubPullRequests = github.getPullRequestDataFromApi(githubPrs);
+        this.whitelistedDomains = whitelistedDomains;
+        this.redirectors = redirectors;
     }
     static async getTpFpNaaCountFromDomains(domainIds) {
         if (!domainIds.length)
@@ -451,7 +464,7 @@ class Domains {
     static async triggerDomainUpdate(domainIdsValid) {
         const domainStats = await this.getTpFpNaaCountFromDomains(domainIdsValid);
         return Object.entries(domainStats || {}).flatMap(([domainName, feedbackCount]) => {
-            const domainId = index_js_1.getDomainId(domainName), domainElementLi = document.getElementById(domainId);
+            const domainId = index_1.indexHelpers.getDomainId(domainName), domainElementLi = document.getElementById(domainId);
             if (!domainElementLi)
                 return [];
             this.allDomainInformation[domainName].metasmoke = feedbackCount;

@@ -1,8 +1,8 @@
-import * as github from './github.js';
-import * as metasmoke from './metasmoke.js';
-import * as chat from './chat.js';
-import * as stackexchange from './stackexchange.js';
-import { Domains } from './domain_stats.js';
+import * as github from './github';
+import * as metasmoke from './metasmoke';
+import * as chat from './chat';
+import * as stackexchange from './stackexchange';
+import { Domains } from './domain_stats';
 
 export interface Toastr {
     success(message: string): void;
@@ -22,18 +22,20 @@ const metasmokeSearchUrl = 'https://metasmoke.erwaysoftware.com/search';
 const waitGifHtml = '<img class="fire-extra-wait" src="/content/img/progress-dots.gif">';
 const greenTick = '<span class="fire-extra-green"> ✓</span>', redCross = '<span class="fire-extra-red"> ✗</span>';
 
-const getMetasmokeSearchUrl = (domain: string): string =>
-    encodeURI(`${metasmokeSearchUrl}?utf8=✓&body_is_regex=1&body=(?s:\\b${domain}\\b)`); // returns an MS search URL for a domain
-// According to https://charcoal-se.org/smokey/Guidance-for-Blacklisting-and-Watching (as much as possible at least)
-// TP count between 1 and 5, there must be no FPs.
-const qualifiesForWatch = ([tpCount, fpCount, naaCount]: number[], seHits: string): boolean =>
-    tpCount >= 1 && tpCount < 5 && fpCount + naaCount === 0 && Number(seHits) < 10;
-// "The site has at least five hits in metasmoke, with no false positives". Assumes that the current post is <=6 months old.
-const qualifiesForBlacklist = ([tpCount, fpCount, naaCount]: number[], seHits: string): boolean =>
-    tpCount >= 5 && fpCount + naaCount === 0 && Number(seHits) < 5;
-const isCaught = (regexesArray: RegExp[], domain: string): boolean => regexesArray.some(regex => regex.test(domain));
-// get the id the domain li has - dots are replaced with dash
-export const getDomainId = (domainName: string): string => `fire-extra-${domainName.replace(/\./g, '-')}`;
+export const indexHelpers = {
+    getMetasmokeSearchUrl: (domain: string): string =>
+        encodeURI(`${metasmokeSearchUrl}?utf8=✓&body_is_regex=1&body=(?s:\\b${domain}\\b)`), // returns an MS search URL for a domain
+    // According to https://charcoal-se.org/smokey/Guidance-for-Blacklisting-and-Watching (as much as possible at least)
+    // TP count between 1 and 5, there must be no FPs.
+    qualifiesForWatch: ([tpCount, fpCount, naaCount]: number[], seHits: string): boolean =>
+        tpCount >= 1 && tpCount < 5 && fpCount + naaCount === 0 && Number(seHits) < 10,
+    // "The site has at least five hits in metasmoke, with no false positives". Assumes that the current post is <=6 months old.
+    qualifiesForBlacklist: ([tpCount, fpCount, naaCount]: number[], seHits: string): boolean =>
+        tpCount >= 5 && fpCount + naaCount === 0 && Number(seHits) < 5,
+    isCaught: (regexesArray: RegExp[], domain: string): boolean => regexesArray.some(regex => regex.test(domain)),
+    // get the id the domain li has - dots are replaced with dash
+    getDomainId: (domainName: string): string => `fire-extra-${domainName.replace(/\./g, '-')}`
+};
 
 function updateDomainInformation(domainName: string): void {
     const seResultCount = Domains.allDomainInformation[domainName]?.stackexchange;
@@ -41,23 +43,23 @@ function updateDomainInformation(domainName: string): void {
     // the SE hits might be zero, so using !hits returns true!!
     if ((!seResultCount && seResultCount !== '0') || !metasmokeStats?.length) return;
 
-    const isWatched = isCaught(Domains.watchedWebsitesRegexes, domainName);
-    const isBlacklisted = isCaught(Domains.blacklistedWebsitesRegexes, domainName);
+    const isWatched = indexHelpers.isCaught(Domains.watchedWebsitesRegexes, domainName);
+    const isBlacklisted = indexHelpers.isCaught(Domains.blacklistedWebsitesRegexes, domainName);
     const escapedDomain = domainName.replace(/\./, '\\.'); // escape dots
     const watch = {
         human: 'watched: ' + (isWatched ? 'yes' : 'no'),
         tooltip: isWatched || isBlacklisted ? 'domain already watched' : `!!/watch- ${escapedDomain}`,
-        suggested: qualifiesForWatch(metasmokeStats, seResultCount) && !isWatched && !isBlacklisted,
+        suggested: indexHelpers.qualifiesForWatch(metasmokeStats, seResultCount) && !isWatched && !isBlacklisted,
         class: `fire-extra-${isWatched || isBlacklisted ? 'disabled' : 'watch'}`
     };
     const blacklist = {
         human: 'blacklisted: ' + (isBlacklisted ? 'yes' : 'no'),
         tooltip: isBlacklisted ? 'domain already blacklisted' : `!!/blacklist-website- ${escapedDomain}`,
-        suggested: qualifiesForBlacklist(metasmokeStats, seResultCount) && !isBlacklisted,
+        suggested: indexHelpers.qualifiesForBlacklist(metasmokeStats, seResultCount) && !isBlacklisted,
         class: `fire-extra-${isBlacklisted ? 'disabled' : 'blacklist'}`
     };
 
-    const domainId = getDomainId(domainName), domainElementLi = document.getElementById(domainId);
+    const domainId = indexHelpers.getDomainId(domainName), domainElementLi = document.getElementById(domainId);
     const watchButton = domainElementLi?.querySelector('.fire-extra-watch'), blacklistButton = domainElementLi?.querySelector('.fire-extra-blacklist');
     const watchInfo = domainElementLi?.querySelector('.fire-extra-watch-info'), blacklistInfo = domainElementLi?.querySelector('.fire-extra-blacklist-info');
 
@@ -115,7 +117,7 @@ async function addHtmlToFirePopup(): Promise<void> {
         Domains.allDomainInformation[domainName] = {} as { metasmoke: number[]; stackexchange: string; };
         const domainItem = document.createElement('li');
         domainItem.innerHTML = domainName + '&nbsp;';
-        domainItem.id = getDomainId(domainName);
+        domainItem.id = indexHelpers.getDomainId(domainName);
         domainList.appendChild(domainItem);
 
         // if the domain is whitelisted or a redirector, don't search for TPs/FPs/NAAs. They often have too many hits on SE/MS, and they make the script slower
@@ -132,10 +134,11 @@ async function addHtmlToFirePopup(): Promise<void> {
         // use a function in case githubPrOpenItem is null (then it'd throw an error because we use .id)
         const watchBlacklistButtons = '<a class="fire-extra-watch">!!/watch</a>&nbsp;&nbsp;<a class="fire-extra-blacklist">!!/blacklist</a>&nbsp;&nbsp;';
         const actionsAreaHtml = githubPrOpenItem ? github.getPendingPrHtml(githubPrOpenItem) : watchBlacklistButtons;
+        const msSearchUrl = indexHelpers.getMetasmokeSearchUrl(escapedDomain);
 
         domainItem.insertAdjacentHTML('beforeend',
             `(
-           <a href="${getMetasmokeSearchUrl(escapedDomain)}">MS</a>: <span class="fire-extra-ms-stats">${waitGifHtml}</span>&nbsp;
+           <a href="${msSearchUrl}">MS</a>: <span class="fire-extra-ms-stats">${waitGifHtml}</span>&nbsp;
          |&nbsp;
            <span class="fire-extra-se-results"><a href="${stackexchange.seSearchPage}${domainName}">${waitGifHtml}</a></span>
          )&nbsp;&nbsp;${actionsAreaHtml}
@@ -143,7 +146,7 @@ async function addHtmlToFirePopup(): Promise<void> {
                 .replace(/^\s+/mg, '').replace(/\n/g, ''));
 
         stackexchange.getSeSearchResultsForDomain(domainName).then(hitCount => {
-            const domainElementLi = document.getElementById(getDomainId(domainName));
+            const domainElementLi = document.getElementById(indexHelpers.getDomainId(domainName));
             if (!domainElementLi) return; // in case the popup is closed before the request is finished
 
             Domains.allDomainInformation[domainName].stackexchange = hitCount;

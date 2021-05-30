@@ -1,6 +1,6 @@
-import * as metasmoke from './metasmoke.js';
-import * as github from './github.js';
-import { Toastr, getDomainId } from './index.js';
+import * as metasmoke from './metasmoke';
+import * as github from './github';
+import { Toastr, indexHelpers } from './index';
 
 declare const toastr: Toastr;
 interface MetasmokeDomainStats {
@@ -89,7 +89,7 @@ export class Domains {
     public static async triggerDomainUpdate(domainIdsValid: number[]): Promise<string[]> {
         const domainStats = await this.getTpFpNaaCountFromDomains(domainIdsValid);
         return Object.entries(domainStats || {}).flatMap(([domainName, feedbackCount]) => {
-            const domainId = getDomainId(domainName), domainElementLi = document.getElementById(domainId);
+            const domainId = indexHelpers.getDomainId(domainName), domainElementLi = document.getElementById(domainId);
             if (!domainElementLi) return []; // in case the popup is closed before the process is complete
 
             this.allDomainInformation[domainName].metasmoke = feedbackCount;
