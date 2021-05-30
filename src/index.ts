@@ -169,8 +169,8 @@ async function addHtmlToFirePopup(): Promise<void> {
 }
 
 void (async function(): Promise<void> {
-    CHAT.addEventHandlerHook(chat.newChatEventOccurred);
     await Domains.fetchAllDomainInformation();
+    CHAT.addEventHandlerHook(chat.newChatEventOccurred);
     window.addEventListener('fire-popup-appeared', addHtmlToFirePopup);
     GM_addStyle(`
 .fire-extra-domains-list {

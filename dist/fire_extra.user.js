@@ -48,9 +48,10 @@ exports.indexHelpers = {
     getDomainId: (domainName) => `fire-extra-${domainName.replace(/\./g, '-')}`
 };
 function updateDomainInformation(domainName) {
-    const seResultCount = domain_stats_1.Domains.allDomainInformation[domainName]?.stackexchange;
-    const metasmokeStats = domain_stats_1.Domains.allDomainInformation[domainName]?.metasmoke;
-    if ((!seResultCount && seResultCount !== '0') || !metasmokeStats?.length)
+    var _a, _b;
+    const seResultCount = (_a = domain_stats_1.Domains.allDomainInformation[domainName]) === null || _a === void 0 ? void 0 : _a.stackexchange;
+    const metasmokeStats = (_b = domain_stats_1.Domains.allDomainInformation[domainName]) === null || _b === void 0 ? void 0 : _b.metasmoke;
+    if ((!seResultCount && seResultCount !== '0') || !(metasmokeStats === null || metasmokeStats === void 0 ? void 0 : metasmokeStats.length))
         return;
     const isWatched = exports.indexHelpers.isCaught(domain_stats_1.Domains.watchedWebsitesRegexes, domainName);
     const isBlacklisted = exports.indexHelpers.isCaught(domain_stats_1.Domains.blacklistedWebsitesRegexes, domainName);
@@ -68,10 +69,10 @@ function updateDomainInformation(domainName) {
         class: `fire-extra-${isBlacklisted ? 'disabled' : 'blacklist'}`
     };
     const domainId = exports.indexHelpers.getDomainId(domainName), domainElementLi = document.getElementById(domainId);
-    const watchButton = domainElementLi?.querySelector('.fire-extra-watch'), blacklistButton = domainElementLi?.querySelector('.fire-extra-blacklist');
-    const watchInfo = domainElementLi?.querySelector('.fire-extra-watch-info'), blacklistInfo = domainElementLi?.querySelector('.fire-extra-blacklist-info');
-    watchInfo?.setAttribute('fire-tooltip', watch.human);
-    blacklistInfo?.setAttribute('fire-tooltip', blacklist.human);
+    const watchButton = domainElementLi === null || domainElementLi === void 0 ? void 0 : domainElementLi.querySelector('.fire-extra-watch'), blacklistButton = domainElementLi === null || domainElementLi === void 0 ? void 0 : domainElementLi.querySelector('.fire-extra-blacklist');
+    const watchInfo = domainElementLi === null || domainElementLi === void 0 ? void 0 : domainElementLi.querySelector('.fire-extra-watch-info'), blacklistInfo = domainElementLi === null || domainElementLi === void 0 ? void 0 : domainElementLi.querySelector('.fire-extra-blacklist-info');
+    watchInfo === null || watchInfo === void 0 ? void 0 : watchInfo.setAttribute('fire-tooltip', watch.human);
+    blacklistInfo === null || blacklistInfo === void 0 ? void 0 : blacklistInfo.setAttribute('fire-tooltip', blacklist.human);
     if (!watchInfo || !blacklistInfo)
         return;
     watchInfo.innerHTML = '👀: ' + (isWatched ? greenTick : redCross);
@@ -92,7 +93,7 @@ function updateDomainInformation(domainName) {
 async function addHtmlToFirePopup() {
     const reportedPostDiv = document.querySelector('.fire-reported-post');
     const fireMetasmokeButton = document.querySelector('.fire-metasmoke-button');
-    const nativeSeLink = [...new URL(fireMetasmokeButton?.href || '').searchParams][0][1];
+    const nativeSeLink = [...new URL((fireMetasmokeButton === null || fireMetasmokeButton === void 0 ? void 0 : fireMetasmokeButton.href) || '').searchParams][0][1];
     const metasmokePostId = fire.reportCache[nativeSeLink].id;
     const domains = await metasmoke.getAllDomainsFromPost(metasmokePostId);
     if (!domains.length)
@@ -103,8 +104,8 @@ async function addHtmlToFirePopup() {
     const header = document.createElement('h3');
     header.innerText = 'Domains';
     dataWrapperElement.appendChild(header);
-    reportedPostDiv?.insertAdjacentElement('afterend', dataWrapperElement);
-    reportedPostDiv?.insertAdjacentElement('afterend', divider);
+    reportedPostDiv === null || reportedPostDiv === void 0 ? void 0 : reportedPostDiv.insertAdjacentElement('afterend', dataWrapperElement);
+    reportedPostDiv === null || reportedPostDiv === void 0 ? void 0 : reportedPostDiv.insertAdjacentElement('afterend', divider);
     const domainList = document.createElement('ul');
     domainList.classList.add('fire-extra-domains-list');
     const domainIdsValid = domains.filter(domainObject => !domain_stats_1.Domains.whitelistedDomains.includes(domainObject.domain)
@@ -160,8 +161,8 @@ async function addHtmlToFirePopup() {
     dataWrapperElement.appendChild(domainList);
 }
 void (async function () {
-    CHAT.addEventHandlerHook(chat.newChatEventOccurred);
     await domain_stats_1.Domains.fetchAllDomainInformation();
+    CHAT.addEventHandlerHook(chat.newChatEventOccurred);
     window.addEventListener('fire-popup-appeared', addHtmlToFirePopup);
     GM_addStyle(`
 .fire-extra-domains-list {
@@ -231,22 +232,24 @@ function getRegexesFromTxtFile(fileContent, position) {
 exports.getRegexesFromTxtFile = getRegexesFromTxtFile;
 function getPullRequestDataFromApi(jsonData) {
     return jsonData.filter(item => item.user.id === smokeDetectorGithubId && item.state === 'open').flatMap(item => {
+        var _a, _b;
         const { number, title } = item;
         let regex;
         try {
-            regex = new RegExp(/(?:Watch|Blacklist)\s(.*)/.exec(title)?.[1] || '');
+            regex = new RegExp(((_a = /(?:Watch|Blacklist)\s(.*)/.exec(title)) === null || _a === void 0 ? void 0 : _a[1]) || '');
         }
         catch (error) {
             return [];
         }
-        const authorName = (/^(.*?):/.exec(title))?.[1];
+        const authorName = (_b = (/^(.*?):/.exec(title))) === null || _b === void 0 ? void 0 : _b[1];
         const prType = (/^.*?:\s(Watch)\s/.exec(title)) ? 'watch' : 'blacklist';
         return [{ id: number, regex: regex, author: authorName || '', type: prType }];
     });
 }
 exports.getPullRequestDataFromApi = getPullRequestDataFromApi;
 async function getUpdatedGithubPullRequestInfo(parsedContent) {
-    const messageText = parsedContent.querySelector('body')?.innerText || '';
+    var _a;
+    const messageText = ((_a = parsedContent.querySelector('body')) === null || _a === void 0 ? void 0 : _a.innerText) || '';
     if (!/Closed pull request |Merge pull request|opened by SmokeDetector/.test(messageText))
         return;
     const githubPrsApiCall = await fetch(exports.githubPrApiUrl), githubPrsFromApi = await githubPrsApiCall.json();
@@ -322,9 +325,10 @@ const charcoalRoomId = 11540;
 const smokedetectorId = 120914;
 const metasmokeId = 478536;
 async function sendActionMessageToChat(messageType, domainOrPrId) {
+    var _a;
     const messageToSend = `!!/${messageType === 'blacklist' ? messageType + '-website' : messageType}- ${domainOrPrId}`
         .replace('approve-', 'approve');
-    const userFkey = document.querySelector('input[name="fkey"]')?.value;
+    const userFkey = (_a = document.querySelector('input[name="fkey"]')) === null || _a === void 0 ? void 0 : _a.value;
     if (!userFkey)
         throw new Error('Chat fkey not found');
     const params = new FormData();
@@ -356,11 +360,12 @@ function addActionListener(element, action, domainOrPrId) {
 }
 exports.addActionListener = addActionListener;
 function updateWatchesAndBlacklists(parsedContent) {
-    if (!(/SmokeDetector: Auto (?:un)?(?:watch|blacklist) of/.exec(parsedContent.querySelector('body')?.innerText || '')))
+    var _a, _b;
+    if (!(/SmokeDetector: Auto (?:un)?(?:watch|blacklist) of/.exec(((_a = parsedContent.querySelector('body')) === null || _a === void 0 ? void 0 : _a.innerText) || '')))
         return;
     try {
         const newRegex = new RegExp(parsedContent.querySelectorAll('code')[1].innerHTML);
-        const anchorInnerHtml = parsedContent.querySelectorAll('a')?.[1].innerHTML;
+        const anchorInnerHtml = (_b = parsedContent.querySelectorAll('a')) === null || _b === void 0 ? void 0 : _b[1].innerHTML;
         const isWatch = Boolean(/Auto\swatch\sof\s/.exec(anchorInnerHtml));
         const isBlacklist = Boolean(/Auto\sblacklist\sof\s/.exec(anchorInnerHtml));
         const isUnwatch = Boolean(/Auto\sunwatch\sof\s/.exec(anchorInnerHtml));
@@ -384,15 +389,14 @@ function updateWatchesAndBlacklists(parsedContent) {
         return;
     }
 }
-async function newChatEventOccurred({ event_type, user_id, content }) {
+function newChatEventOccurred({ event_type, user_id, content }) {
     if ((user_id !== smokedetectorId && user_id !== metasmokeId) || event_type !== 1)
         return;
     const parsedContent = new DOMParser().parseFromString(content, 'text/html');
     updateWatchesAndBlacklists(parsedContent);
-    const newGithubPrInfo = await github.getUpdatedGithubPullRequestInfo(parsedContent);
-    if (!newGithubPrInfo)
-        return;
-    domain_stats_1.Domains.githubPullRequests = newGithubPrInfo;
+    github.getUpdatedGithubPullRequestInfo(parsedContent)
+        .then(newGithubPrInfo => newGithubPrInfo ? domain_stats_1.Domains.githubPullRequests = newGithubPrInfo : '')
+        .catch(error => console.error(error));
 }
 exports.newChatEventOccurred = newChatEventOccurred;
 
@@ -410,12 +414,6 @@ const index_1 = __webpack_require__(0);
 const getColouredSpan = (feedbackCount, feedback) => `<span class="fire-extra-${feedback}" fire-tooltip=${feedback.toUpperCase()}>${feedbackCount}</span>`;
 const getColouredSpans = ([tpCount, fpCount, naaCount]) => `${getColouredSpan(tpCount, 'tp')}, ${getColouredSpan(fpCount, 'fp')}, ${getColouredSpan(naaCount, 'naa')}`;
 class Domains {
-    static allDomainInformation = {};
-    static watchedWebsitesRegexes;
-    static blacklistedWebsitesRegexes;
-    static githubPullRequests;
-    static whitelistedDomains;
-    static redirectors;
     static async fetchAllDomainInformation() {
         if (this.watchedWebsitesRegexes && this.blacklistedWebsitesRegexes && this.githubPullRequests)
             return;
@@ -438,6 +436,7 @@ class Domains {
         this.githubPullRequests = github.getPullRequestDataFromApi(githubPrs);
         this.whitelistedDomains = whitelistedDomains;
         this.redirectors = redirectors;
+        return [this.watchedWebsitesRegexes, this.blacklistedWebsitesRegexes, this.githubPullRequests, whitelistedDomains, redirectors];
     }
     static async getTpFpNaaCountFromDomains(domainIds) {
         if (!domainIds.length)
@@ -477,6 +476,7 @@ class Domains {
     }
 }
 exports.Domains = Domains;
+Domains.allDomainInformation = {};
 
 
 /***/ }),
@@ -491,7 +491,8 @@ function getSeSearchErrorMessage(status, statusText, domain) {
     return `Error ${status} while trying to fetch the SE search results for ${domain}: ${statusText}.`;
 }
 function getSeResultCount(pageHtml) {
-    return pageHtml.querySelector('.results-header h2')?.textContent?.trim().replace(/,/g, '').match(/\d+/)?.[0] || '0';
+    var _a, _b, _c;
+    return ((_c = (_b = (_a = pageHtml.querySelector('.results-header h2')) === null || _a === void 0 ? void 0 : _a.textContent) === null || _b === void 0 ? void 0 : _b.trim().replace(/,/g, '').match(/\d+/)) === null || _c === void 0 ? void 0 : _c[0]) || '0';
 }
 function getSeSearchResultsForDomain(domain) {
     const requestUrl = exports.seSearchPage + encodeURIComponent(domain);

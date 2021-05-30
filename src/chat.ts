@@ -86,11 +86,11 @@ function updateWatchesAndBlacklists(parsedContent: Document): void {
     }
 }
 
-export async function newChatEventOccurred({ event_type, user_id, content }: ChatEvent): Promise<void> {
+export function newChatEventOccurred({ event_type, user_id, content }: ChatEvent): void {
     if ((user_id !== smokedetectorId && user_id !== metasmokeId) || event_type !== 1) return;
     const parsedContent = new DOMParser().parseFromString(content, 'text/html');
     updateWatchesAndBlacklists(parsedContent);
-    const newGithubPrInfo = await github.getUpdatedGithubPullRequestInfo(parsedContent);
-    if (!newGithubPrInfo) return;
-    Domains.githubPullRequests = newGithubPrInfo;
+    github.getUpdatedGithubPullRequestInfo(parsedContent)
+        .then(newGithubPrInfo => newGithubPrInfo ? Domains.githubPullRequests = newGithubPrInfo : '')
+        .catch(error => console.error(error));
 }
