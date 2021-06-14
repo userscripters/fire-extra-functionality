@@ -1,11 +1,18 @@
 import { Toastr } from './index';
 import * as github from './github';
 import { Domains } from './domain_stats';
+import fetch from 'node-fetch';
 
 declare const toastr: Toastr;
 
 export interface ChatObject {
     addEventHandlerHook(callback: (eventInfo: ChatEvent) => void): void;
+}
+
+export interface ChatParsedEvent {
+    event_type: number;
+    user_id: number;
+    content: Document;
 }
 
 interface ChatEvent {
@@ -21,9 +28,7 @@ interface ChatResponse {
 
 type MessageActions = 'watch' | 'blacklist' | 'approve';
 
-const charcoalRoomId = 11540;
-const smokedetectorId = 120914;
-const metasmokeId = 478536;
+const charcoalRoomId = 11540, smokedetectorId = 120914, metasmokeId = 478536;
 
 async function sendActionMessageToChat(messageType: MessageActions, domainOrPrId: string | number): Promise<void> {
     const messageToSend = `!!/${messageType === 'blacklist' ? messageType + '-website' : messageType}- ${domainOrPrId}`
@@ -35,9 +40,9 @@ async function sendActionMessageToChat(messageType: MessageActions, domainOrPrId
     params.append('text', messageToSend);
     params.append('fkey', userFkey);
 
-    const chatNewMessageCall = await fetch(`/chats/${charcoalRoomId}/messages/new`, {
+    const chatNewMessageCall = await (window.fetch ? window.fetch : fetch)(`/chats/${charcoalRoomId}/messages/new`, {
         method: 'POST',
-        body: params
+        body: params as URLSearchParams
     });
     if (chatNewMessageCall.status !== 200) throw new Error(`Failed to send message to chat. Returned error is ${chatNewMessageCall.status}`);
 
@@ -60,7 +65,9 @@ export function addActionListener(element: HTMLElement | null, action: MessageAc
 }
 
 function updateWatchesAndBlacklists(parsedContent: Document): void {
-    if (!(/SmokeDetector: Auto (?:un)?(?:watch|blacklist) of/.exec(parsedContent.querySelector('body')?.innerText || ''))) return;
+    const messageText = parsedContent.body?.innerHTML || '';
+    // make sure the (un)watch/blacklist happened recently (check for "Blacklists reloaded")
+    if (!/SmokeDetector: Auto (?:un)?(?:watch|blacklist) of/.exec(messageText) || !/Blacklists reloaded at/.exec(messageText)) return;
     try {
         const newRegex = new RegExp(parsedContent.querySelectorAll('code')[1].innerHTML);
 
@@ -73,9 +80,9 @@ function updateWatchesAndBlacklists(parsedContent: Document): void {
         if (isWatch) {
             Domains.watchedWebsitesRegexes.push(newRegex);
         } else if (isBlacklist) {
+            // if it is a blacklist, also remove the item from the watchlist
             Domains.watchedWebsitesRegexes = Domains.watchedWebsitesRegexes.filter(regex => regex.toString() !== newRegex.toString());
             Domains.blacklistedWebsitesRegexes.push(newRegex);
-            Domains.blacklistedWebsitesRegexes.push(newRegex); // if it is a blacklist, also remove the item from the watchlist
         } else if (isUnwatch) {
             Domains.watchedWebsitesRegexes = Domains.watchedWebsitesRegexes.filter(regex => regex.toString() !== newRegex.toString());
         } else if (isUnblacklist) {
@@ -86,11 +93,11 @@ function updateWatchesAndBlacklists(parsedContent: Document): void {
     }
 }
 
-export function newChatEventOccurred({ event_type, user_id, content }: ChatEvent): void {
+export function newChatEventOccurred({ event_type, user_id, content }: ChatParsedEvent): void {
     if ((user_id !== smokedetectorId && user_id !== metasmokeId) || event_type !== 1) return;
-    const parsedContent = new DOMParser().parseFromString(content, 'text/html');
-    updateWatchesAndBlacklists(parsedContent);
-    github.getUpdatedGithubPullRequestInfo(parsedContent)
+    updateWatchesAndBlacklists(content);
+    // don't wait for that to finish for the function to return
+    github.getUpdatedGithubPullRequestInfo(content)
         .then(newGithubPrInfo => newGithubPrInfo ? Domains.githubPullRequests = newGithubPrInfo : '')
         .catch(error => console.error(error));
 }

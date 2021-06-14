@@ -170,7 +170,14 @@ async function addHtmlToFirePopup(): Promise<void> {
 
 void (async function(): Promise<void> {
     await Domains.fetchAllDomainInformation();
-    CHAT.addEventHandlerHook(chat.newChatEventOccurred);
+    CHAT.addEventHandlerHook(event => {
+        const eventToPass = Object.assign({
+            event,
+            // because we can't use DOMParser with tests, newChatEventOccurred has to accept a Document argument for content
+            content: new DOMParser().parseFromString(event.content, 'text/html')
+        }) as chat.ChatParsedEvent;
+        chat.newChatEventOccurred(eventToPass);
+    });
     window.addEventListener('fire-popup-appeared', addHtmlToFirePopup);
     GM_addStyle(`
 .fire-extra-domains-list {

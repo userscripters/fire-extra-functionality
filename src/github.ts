@@ -1,3 +1,5 @@
+import fetch from 'node-fetch';
+
 export interface GithubApiResponse {
     number: number;
     title: string;
@@ -26,7 +28,7 @@ const getGithubPrUrl = (pullRequestId: number): string => `//github.com/${smokeD
 const getPrTooltip = ({ id, regex, author, type }: GithubApiInformation): string =>
     `${author} wants to ${type} ${regex.source} in PR#${id}`; // fire-tooltip text explaining pending PRs
 export const getPendingPrHtml = (githubPrOpenItem: GithubApiInformation): string =>
-    `<a href=${getGithubPrUrl(githubPrOpenItem.id)} fire-tooltip="${getPrTooltip(githubPrOpenItem)}">PR#${githubPrOpenItem.id}</a>`
+    `<a href="${getGithubPrUrl(githubPrOpenItem.id)}" fire-tooltip="${getPrTooltip(githubPrOpenItem)}">PR#${githubPrOpenItem.id}</a>`
   + `&nbsp;pending <a class="fire-extra-approve" fire-tooltip="!!/approve ${githubPrOpenItem.id}">!!/approve</a>&nbsp;&nbsp;`;
 
 export function getRegexesFromTxtFile(fileContent: string, position: number): RegExp[] {
@@ -43,7 +45,7 @@ export function getRegexesFromTxtFile(fileContent: string, position: number): Re
     });
 }
 
-export function getPullRequestDataFromApi(jsonData: GithubApiResponse[]): GithubApiInformation[] {
+export function parsePullRequestDataFromApi(jsonData: GithubApiResponse[]): GithubApiInformation[] {
     // only interested in open PRs by SD
     return jsonData.filter(item => item.user.id === smokeDetectorGithubId && item.state === 'open').flatMap(item => {
         // Sample PR title => username: Watch example\.com
@@ -61,8 +63,9 @@ export function getPullRequestDataFromApi(jsonData: GithubApiResponse[]): Github
 }
 
 export async function getUpdatedGithubPullRequestInfo(parsedContent: Document): Promise<GithubApiInformation[] | undefined> {
-    const messageText = parsedContent.querySelector('body')?.innerText || '';
+    const messageText = parsedContent.body?.innerHTML || '';
     if (!/Closed pull request |Merge pull request|opened by SmokeDetector/.test(messageText)) return;
-    const githubPrsApiCall = await fetch(githubPrApiUrl), githubPrsFromApi = await githubPrsApiCall.json() as GithubApiResponse[];
-    return getPullRequestDataFromApi(githubPrsFromApi);
+    const githubPrsApiCall = await (window.fetch ? window.fetch : fetch)(githubPrApiUrl);
+    const githubPrsFromApi = await githubPrsApiCall.json() as GithubApiResponse[];
+    return parsePullRequestDataFromApi(githubPrsFromApi);
 }

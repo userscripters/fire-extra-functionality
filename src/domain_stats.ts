@@ -1,6 +1,7 @@
 import * as metasmoke from './metasmoke';
 import * as github from './github';
 import { Toastr, indexHelpers } from './index';
+import fetch from 'node-fetch';
 
 declare const toastr: Toastr;
 interface MetasmokeDomainStats {
@@ -15,7 +16,7 @@ interface DomainStats {
 }
 
 // Gets a coloured TP/FP/NAA span.
-const getColouredSpan = (feedbackCount: number, feedback: string): string =>
+const getColouredSpan = (feedbackCount: number, feedback: 'tp' | 'fp' | 'naa'): string =>
     `<span class="fire-extra-${feedback}" fire-tooltip=${feedback.toUpperCase()}>${feedbackCount}</span>`;
 const getColouredSpans = ([tpCount, fpCount, naaCount]: number[]): string =>
     `${getColouredSpan(tpCount, 'tp')}, ${getColouredSpan(fpCount, 'fp')}, ${getColouredSpan(naaCount, 'naa')}`;
@@ -38,13 +39,13 @@ export class Domains {
         // Thanks tripleee! https://github.com/Charcoal-SE/halflife/blob/ab0fa5fc2a048b9e17762ceb6e3472e4d9c65317/halflife.py#L77
         const [
             watchedWebsitesCall, blacklistedWebsitesCall, githubPrsCall, whitelistedDomainsCall, redirectorsCall
-        ] = await Promise.all([
-            fetch(github.watchedKeywordsUrl),
-            fetch(github.blacklistedKeywordsUrl),
-            fetch(github.githubPrApiUrl),
-            fetch(github.whitelisted),
-            fetch(github.redirectors)
-        ]);
+        ] = await Promise.all(([
+            (window.fetch ? window.fetch : fetch)(github.watchedKeywordsUrl),
+            (window.fetch ? window.fetch : fetch)(github.blacklistedKeywordsUrl),
+            (window.fetch ? window.fetch : fetch)(github.githubPrApiUrl),
+            (window.fetch ? window.fetch : fetch)(github.whitelisted),
+            (window.fetch ? window.fetch : fetch)(github.redirectors)
+        ]) as Promise<Response>[]);
         const [watchedWebsites, blacklistedWebsites, githubPrs, whitelistedDomains, redirectors] = await Promise.all([
             watchedWebsitesCall.text(),
             blacklistedWebsitesCall.text(),
@@ -54,7 +55,7 @@ export class Domains {
         ]);
         this.watchedWebsitesRegexes = github.getRegexesFromTxtFile(watchedWebsites, 2);
         this.blacklistedWebsitesRegexes = github.getRegexesFromTxtFile(blacklistedWebsites, 0);
-        this.githubPullRequests = github.getPullRequestDataFromApi(githubPrs);
+        this.githubPullRequests = github.parsePullRequestDataFromApi(githubPrs);
         this.whitelistedDomains = whitelistedDomains;
         this.redirectors = redirectors;
     }
