@@ -169,10 +169,11 @@ async function addHtmlToFirePopup(): Promise<void> {
 }
 
 void (async function(): Promise<void> {
+    await new Promise(resolve => setTimeout(resolve, 0));
     await Domains.fetchAllDomainInformation();
     CHAT.addEventHandlerHook(event => {
         const eventToPass = Object.assign({
-            event,
+            ...event,
             // because we can't use DOMParser with tests, newChatEventOccurred has to accept a Document argument for content
             content: new DOMParser().parseFromString(event.content, 'text/html')
         }) as chat.ChatParsedEvent;
