@@ -19,7 +19,7 @@
   },
   "homepage": "https://github.com/userscripters/fire-extra-functionality#readme",
   "devDependencies": {
-    "@types/chai": "^4.2.18",
+    "@types/chai": "^4.2.19",
     "@types/jsdom": "^16.2.11",
     "@types/mocha": "^8.2.2",
     "@types/node": "^15.12.4",
