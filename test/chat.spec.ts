@@ -15,10 +15,8 @@ function getRandomChatMessage(originalChatMessage: string, actionType: ChatMessa
 describe('chat helpers', () => {
     before(async () => await Domains.fetchAllDomainInformation());
     it('should update watches or blacklists based on the content of a chat message', async () => {
-        const chatMessageCall = await fetch('https://chat.stackexchange.com/messages/58329215/history');
-        const chatMessageResponse = await chatMessageCall.text();
-        const parsedChatMessage = new JSDOM(chatMessageResponse).window.document;
-        const chatMessageContent = parsedChatMessage.querySelector('#message-58329215 .content')?.innerHTML.trim() || '';
+        const chatMessageCall = await fetch('https://chat.stackexchange.com/message/58329215');
+        const chatMessageContent = await chatMessageCall.text();
         const randomMessages = [
             getRandomChatMessage(chatMessageContent, 'watch', 'random-domain\\.com'),
             getRandomChatMessage(chatMessageContent, 'blacklist', 'random-random-domain\\.com'),
