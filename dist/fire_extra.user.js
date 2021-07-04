@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        FIRE Additional Functionality
-// @version     1.3.2
+// @version     1.3.3
 // @author      double-beep
 // @contributor Xnero
 // @match       https://chat.stackexchange.com/rooms/11540/charcoal-hq
