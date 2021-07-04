@@ -497,8 +497,14 @@ void (async function () {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getSeSearchResultsForDomain = exports.seSearchPage = void 0;
+exports.getSeSearchResultsForDomain = exports.getShortenedResultCount = exports.seSearchPage = void 0;
 exports.seSearchPage = 'https://stackexchange.com/search?q=url%3A';
+function getShortenedResultCount(number) {
+    return number > 999
+        ? (number / 1000).toFixed(1).replace('.0', '') + 'k'
+        : number.toString();
+}
+exports.getShortenedResultCount = getShortenedResultCount;
 function getSeSearchErrorMessage(status, statusText, domain) {
     return `Error ${status} while trying to fetch the SE search results for ${domain}: ${statusText}.`;
 }
@@ -517,8 +523,8 @@ function getSeSearchResultsForDomain(domain) {
                     reject(getSeSearchErrorMessage(response.status, response.statusText, domain));
                 const parsedResponse = new DOMParser().parseFromString(response.responseText, 'text/html');
                 const resultCount = Number(getSeResultCount(parsedResponse));
-                const shortenedResultCount = resultCount > 999 ? (resultCount / 1000).toFixed(1) + 'k' : resultCount;
-                resolve(shortenedResultCount.toString());
+                const shortenedResultCount = getShortenedResultCount(resultCount);
+                resolve(shortenedResultCount);
             },
             onerror: errorResponse => reject(getSeSearchErrorMessage(errorResponse.status, errorResponse.statusText, domain))
         });
