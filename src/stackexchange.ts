@@ -1,5 +1,12 @@
 export const seSearchPage = 'https://stackexchange.com/search?q=url%3A';
 
+// https://stackoverflow.com/a/9461657
+export function getShortenedResultCount(number: number): string {
+    return number > 999
+        ? (number / 1000).toFixed(1).replace('.0', '') + 'k' // use .replace() to avoid 2.0k, etc.
+        : number.toString();
+}
+
 function getSeSearchErrorMessage(status: number, statusText: string, domain: string): string {
     return `Error ${status} while trying to fetch the SE search results for ${domain}: ${statusText}.`;
 }
@@ -19,9 +26,8 @@ export function getSeSearchResultsForDomain(domain: string): Promise<string> {
                 if (response.status !== 200) reject(getSeSearchErrorMessage(response.status, response.statusText, domain));
                 const parsedResponse = new DOMParser().parseFromString(response.responseText, 'text/html');
                 const resultCount = Number(getSeResultCount(parsedResponse));
-                // https://stackoverflow.com/a/9461657
-                const shortenedResultCount = resultCount > 999 ? (resultCount / 1000).toFixed(1) + 'k' : resultCount;
-                resolve(shortenedResultCount.toString());
+                const shortenedResultCount = getShortenedResultCount(resultCount);
+                resolve(shortenedResultCount);
             },
             onerror: errorResponse => reject(getSeSearchErrorMessage(errorResponse.status, errorResponse.statusText, domain))
         });
