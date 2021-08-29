@@ -82,7 +82,7 @@ export class Domains {
                 domainStats[spamDomain.domain] = [tpPosts, fpPosts, naaPosts];
             });
         } catch (error) {
-            toastr.error(error);
+            toastr.error(error as string);
             console.error('Error while trying to fetch domain stats from GraphiQL.', error);
         }
         return domainStats;

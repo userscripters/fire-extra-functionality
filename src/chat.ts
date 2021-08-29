@@ -58,7 +58,7 @@ export function addActionListener(element: HTMLElement | null, action: MessageAc
             await sendActionMessageToChat(action, domainOrPrId);
             toastr.success('Successfully sent message to chat.');
         } catch (error) {
-            toastr.error(error);
+            toastr.error(error as string);
             console.error('Error while sending message to chat.', error);
         }
     });
