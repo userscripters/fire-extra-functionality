@@ -1,6 +1,7 @@
 const path = require('path');
 const webpack = require('webpack'); // for the banner plugin
 const userscriptInfo = require('./package.json');
+const { default: ResolveTypeScriptPlugin } = require("resolve-typescript-plugin");
 
 module.exports = {
     entry: './src/index.ts',
@@ -56,5 +57,10 @@ module.exports = {
                 loader: 'ts-loader'
             }
         ]
+    },
+    // until WebPack supports .js imports:
+    resolve: {
+        fullySpecified: true,
+        plugins: [new ResolveTypeScriptPlugin()]
     }
-}
+};
