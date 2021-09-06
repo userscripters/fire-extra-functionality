@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-expressions */
 import { expect } from 'chai';
-import { getShortenedResultCount } from '../src/stackexchange';
+import { getShortenedResultCount } from '../src/stackexchange.js';
 
 describe('stackexchange helpers', () => {
     it('should correctly get the correct shortened result count', () => {
