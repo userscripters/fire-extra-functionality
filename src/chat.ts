@@ -1,6 +1,6 @@
-import { Toastr } from './index';
-import * as github from './github';
-import { Domains } from './domain_stats';
+import { Toastr } from './index.js';
+import * as github from './github.js';
+import { Domains } from './domain_stats.js';
 import fetch from 'node-fetch';
 
 declare const toastr: Toastr;
