@@ -40,12 +40,12 @@ export class Domains {
         const [
             watchedWebsitesCall, blacklistedWebsitesCall, githubPrsCall, whitelistedDomainsCall, redirectorsCall
         ] = await Promise.all(([
-            (window.fetch ? window.fetch : fetch)(github.watchedKeywordsUrl),
-            (window.fetch ? window.fetch : fetch)(github.blacklistedKeywordsUrl),
-            (window.fetch ? window.fetch : fetch)(github.githubPrApiUrl),
-            (window.fetch ? window.fetch : fetch)(github.whitelisted),
-            (window.fetch ? window.fetch : fetch)(github.redirectors)
-        ]) as Promise<Response>[]);
+            (fetch || window.fetch)(github.watchedKeywordsUrl),
+            (fetch || window.fetch)(github.blacklistedKeywordsUrl),
+            (fetch || window.fetch)(github.githubPrApiUrl),
+            (fetch || window.fetch)(github.whitelisted),
+            (fetch || window.fetch)(github.redirectors)
+        ]));
         const [watchedWebsites, blacklistedWebsites, githubPrs, whitelistedDomains, redirectors] = await Promise.all([
             watchedWebsitesCall.text(),
             blacklistedWebsitesCall.text(),
