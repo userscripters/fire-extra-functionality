@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-expressions */
 import { expect } from 'chai';
-import { Domains } from '../src/domain_stats';
-import { indexHelpers } from '../src/index';
+import { Domains } from '../src/domain_stats.js';
+import { indexHelpers } from '../src/index.js';
 
 describe('index helpers', () => {
     before(async () => await Domains.fetchAllDomainInformation());

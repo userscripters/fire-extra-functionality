@@ -1,6 +1,6 @@
-import * as metasmoke from './metasmoke';
-import * as github from './github';
-import { Toastr, indexHelpers } from './index';
+import * as metasmoke from './metasmoke.js';
+import * as github from './github.js';
+import { Toastr, indexHelpers } from './index.js';
 import fetch from 'node-fetch';
 
 declare const toastr: Toastr;

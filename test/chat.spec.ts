@@ -1,10 +1,11 @@
 /* eslint-disable no-unused-expressions */
 import { expect } from 'chai';
-import { JSDOM } from 'jsdom';
-import { newChatEventOccurred } from '../src/chat';
-import { Domains } from '../src/domain_stats';
-import { indexHelpers } from '../src/index';
+import jsdom from 'jsdom';
 import fetch from 'node-fetch';
+import { newChatEventOccurred } from '../src/chat.js';
+import { Domains } from '../src/domain_stats.js';
+import { indexHelpers } from '../src/index.js';
+const { JSDOM } = jsdom;
 
 type ChatMessageActions = 'watch' | 'unwatch' | 'blacklist' | 'unblacklist';
 function getRandomChatMessage(originalChatMessage: string, actionType: ChatMessageActions, escapedDomain: string): string {
@@ -12,7 +13,10 @@ function getRandomChatMessage(originalChatMessage: string, actionType: ChatMessa
     return originalChatMessage.replace('Auto watch', `Auto ${actionType}`).replace('linuxbuz\\.com', escapedDomain);
 }
 
-describe('chat helpers', () => {
+describe('chat helpers', function () {
+
+    this.timeout(5e3); // before hook can timeout
+
     before(async () => await Domains.fetchAllDomainInformation());
     it('should update watches or blacklists based on the content of a chat message', async () => {
         const chatMessageCall = await fetch('https://chat.stackexchange.com/message/58329215');

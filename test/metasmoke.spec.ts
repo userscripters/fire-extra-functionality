@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-expressions */
 import { expect } from 'chai';
-import { getAllDomainsFromPost } from '../src/metasmoke';
+import { getAllDomainsFromPost } from '../src/metasmoke.js';
 
 global.window = {} as Window & typeof globalThis;
 

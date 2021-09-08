@@ -1,15 +1,16 @@
 {
-  "compilerOptions": {
-    "strict": true,
-    "lib": ["DOM", "DOM.iterable", "es2020"],
-    "target": "es2019",
-    "module": "commonjs",
-    "moduleResolution": "node",
-    "noUnusedParameters": true,
-    "noUnusedLocals": true,
-    "noErrorTruncation": true,
-    "downlevelIteration": true,
-    "removeComments": true,
-    "outDir": "dist"
-  }
+    "compilerOptions": {
+        "strict": true,
+        "lib": ["DOM", "DOM.iterable", "es2020"],
+        "target": "es2019",
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "noUnusedParameters": true,
+        "noUnusedLocals": true,
+        "noErrorTruncation": true,
+        "downlevelIteration": true,
+        "removeComments": true,
+        "outDir": "dist"
+    },
+    "include": ["src"]
 }

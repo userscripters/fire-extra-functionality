@@ -1,8 +1,9 @@
 /* eslint-disable no-tabs, no-unused-expressions */
 import { expect } from 'chai';
-import { indexHelpers } from '../src/index';
-import * as github from '../src/github';
-import { JSDOM } from 'jsdom';
+import { indexHelpers } from '../src/index.js';
+import * as github from '../src/github.js';
+import jsdom from "jsdom";
+const { JSDOM } = jsdom;
 
 const watchedKeywordsExample = String.raw`1494929269	tripleee	thewellnesscorner\.com
 1494929399	tripleee	optisolbusiness\.com
