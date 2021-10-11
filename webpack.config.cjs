@@ -22,27 +22,25 @@ module.exports = {
         new webpack.BannerPlugin({
             raw: true,
             banner: `// ==UserScript==
-                     // @name        FIRE Additional Functionality
-                     // @version     ${userscriptInfo.version}
-                     // @author      double-beep
-                     // @contributor Xnero
-                     // @match       https://chat.stackexchange.com/rooms/11540/charcoal-hq
-                     // @grant       GM_xmlhttpRequest
-                     // @grant       GM_addStyle
-                     // @run-at      document-start
-                     // @license     GPL-3.0
-                     // @connect     metasmoke.erwaysoftware.com
-                     // @connect     stackexchange.com
-                     // @updateURL   https://github.com/userscripters/fire-extra-functionality/raw/master/dist/fire_extra.user.js
-                     // @downloadURL https://github.com/userscripters/fire-extra-functionality/raw/master/dist/fire_extra.user.js
-                     // @homepageURL https://github.com/userscripters/fire-extra-functionality
-                     // @supportURL  https://github.com/userscripters/fire-extra-functionality/issues
+                     // @name         FIRE Additional Functionality
+                     // @version      ${userscriptInfo.version}
+                     // @author       double-beep
+                     // @contributor  Xnero
+                     // @description  Watch, blacklist and see domain stats directly from the FIRE popup!
+                     // @match        https://chat.stackexchange.com/rooms/11540/charcoal-hq
+                     // @grant        GM_xmlhttpRequest
+                     // @grant        GM_addStyle
+                     // @run-at       document-start
+                     // @license      GPL-3.0
+                     // @connect      metasmoke.erwaysoftware.com
+                     // @connect      stackexchange.com
+                     // @updateURL    https://github.com/userscripters/fire-extra-functionality/raw/master/dist/fire_extra.user.js
+                     // @downloadURL  https://github.com/userscripters/fire-extra-functionality/raw/master/dist/fire_extra.user.js
+                     // @homepageURL  https://github.com/userscripters/fire-extra-functionality
+                     // @homepage     https://github.com/userscripters/fire-extra-functionality
+                     // @supportURL   https://github.com/userscripters/fire-extra-functionality/issues
                      // ==/UserScript==
-                     /* globals fire, toastr, CHAT */
-                     // NOTE: after installing this script, you need to modify FIRE. Add this line:
-                     //     window.dispatchEvent(new CustomEvent('fire-popup-appeared'));
-                     // before L1253 - hideReportImages(). This will fire an event when the FIRE popup opens which this userscript listens to.
-                     // The script only runs on Charcoal HQ (11540) for now.`.replace(/^\s+/mg, '')
+                     /* globals fire, toastr, CHAT */`.replace(/^\s+/mg, '')
         })
     ],
     externals: {
