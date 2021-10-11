@@ -171,6 +171,7 @@ async function addHtmlToFirePopup(): Promise<void> {
 void (async function(): Promise<void> {
     await new Promise(resolve => setTimeout(resolve, 0));
     await Domains.fetchAllDomainInformation();
+
     CHAT.addEventHandlerHook(event => {
         const eventToPass = Object.assign({
             ...event,
@@ -179,7 +180,24 @@ void (async function(): Promise<void> {
         }) as chat.ChatParsedEvent;
         chat.newChatEventOccurred(eventToPass);
     });
-    window.addEventListener('fire-popup-appeared', addHtmlToFirePopup);
+
+    const observer = new MutationObserver(mutations => {
+        mutations.forEach(mutation => {
+            const firePopupAppeared = ([...mutation.addedNodes] as Element[])
+                .some(element => element?.classList?.contains('fire-popup'));
+            if (!firePopupAppeared) return;
+
+            void addHtmlToFirePopup();
+        });
+    });
+
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: false,
+        characterData: false
+    });
+
     GM_addStyle(`
 .fire-extra-domains-list {
   padding: 5px !important;

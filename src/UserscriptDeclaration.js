@@ -19,7 +19,3 @@
 // @supportURL  https://github.com/userscripters/fire-extra-functionality/issues
 // ==/UserScript==
 /* globals fire, toastr, CHAT */
-// NOTE: after installing this script, you need to modify FIRE. Add this line:
-//     window.dispatchEvent(new CustomEvent('fire-popup-appeared'));
-// before L1253 - hideReportImages(). This will fire an event when the FIRE popup opens which this userscript listens to.
-// The script only runs on Charcoal HQ (11540) for now.
