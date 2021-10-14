@@ -1,9 +1,11 @@
 /* eslint-disable no-tabs, no-unused-expressions */
 import { expect } from 'chai';
-import { indexHelpers } from '../src/index.js';
+import { helpers } from '../src/index.js';
 import * as github from '../src/github.js';
 import jsdom from "jsdom";
 const { JSDOM } = jsdom;
+
+global.document = new JSDOM().window.document;
 
 const watchedKeywordsExample = String.raw`1494929269	tripleee	thewellnesscorner\.com
 1494929399	tripleee	optisolbusiness\.com
@@ -65,8 +67,8 @@ describe('github helpers', () => {
         const blacklistedNoBackslashes = blacklistedKeywordsExample.replace(/\\/mg, '').split('\n');
         expect(allParsed.every(item => item instanceof RegExp)); // make sure they're all regexes
         // the array should contain the right regexes
-        expect(watchedNoBackslashes.every(keyword => indexHelpers.isCaught(watchedParsed, keyword))).to.be.true;
-        expect(blacklistedNoBackslashes.every(keyword => indexHelpers.isCaught(blacklistedParsed, keyword))).to.be.true;
+        expect(watchedNoBackslashes.every(keyword => helpers.isCaught(watchedParsed, keyword))).to.be.true;
+        expect(blacklistedNoBackslashes.every(keyword => helpers.isCaught(blacklistedParsed, keyword))).to.be.true;
     });
 
     it('should correctly parse a sample GH API response', () => {
@@ -77,15 +79,29 @@ describe('github helpers', () => {
         expect(firstItem.regex.test('goodhousekeeping.com')).to.be.true;
         expect(secondItem.regex.test('some-domain.with.dots.com')).to.be.true;
 
-        // also test getPendingPrHtml while verifying the *Item's properties are correct
-        const firstItemHtml = '<a href="//github.com/Charcoal-SE/SmokeDetector/pull/1" '
-                            + 'fire-tooltip="Xnero wants to watch goodhousekeeping\\.com in PR#1">PR#1</a>'
-                            + '&nbsp;pending <a class="fire-extra-approve" fire-tooltip="!!/approve 1">!!/approve</a>&nbsp;&nbsp;';
-        const secondItemHtml = '<a href="//github.com/Charcoal-SE/SmokeDetector/pull/4829" '
-                             + 'fire-tooltip="username wants to watch some-domain\\.with\\.dots\\.com in PR#4829">PR#4829</a>&nbsp;'
-                             + 'pending <a class="fire-extra-approve" fire-tooltip="!!/approve 4829">!!/approve</a>&nbsp;&nbsp;';
-        expect(github.getPendingPrHtml(firstItem)).to.be.equal(firstItemHtml);
-        expect(github.getPendingPrHtml(secondItem)).to.be.equal(secondItemHtml);
+        const firstExpectedTooltip = 'Xnero wants to watch goodhousekeeping\\.com in PR#1';
+        const secondExpectedTooltip = 'username wants to watch some-domain\\.with\\.dots\\.com in PR#4829';
+
+        const firstPrItem = github.getPendingPrElement(firstItem);
+        const secondPrItem = github.getPendingPrElement(secondItem);
+
+        const firstPrLink = firstPrItem.firstElementChild as HTMLAnchorElement;
+        expect(firstPrLink.href).to.be.equal('//github.com/Charcoal-SE/SmokeDetector/pull/1');
+        expect(firstPrLink.getAttribute('fire-tooltip')).to.be.equal(firstExpectedTooltip);
+        expect(firstPrLink.innerHTML).to.be.equal('PR#1');
+
+        const firstApprove = firstPrItem.querySelector('.fire-extra-approve');
+        expect(firstApprove?.getAttribute('fire-tooltip')).to.be.equal('!!/approve 1');
+        expect(firstApprove?.innerHTML).to.be.equal('!!/approve');
+
+        const secondPrLink = secondPrItem.firstElementChild as HTMLAnchorElement;
+        expect(secondPrLink.href).to.be.equal('//github.com/Charcoal-SE/SmokeDetector/pull/4829');
+        expect(secondPrLink.getAttribute('fire-tooltip')).to.be.equal(secondExpectedTooltip);
+        expect(secondPrLink.innerHTML).to.be.equal('PR#4829');
+
+        const secondApprove = secondPrItem.querySelector('.fire-extra-approve');
+        expect(secondApprove?.getAttribute('fire-tooltip')).to.be.equal('!!/approve 4829');
+        expect(secondApprove?.innerHTML).to.be.equal('!!/approve');
     });
 
     it('should find if a PR is opened, closed or merged and update the list accordingly', async () => {
@@ -96,10 +112,11 @@ describe('github helpers', () => {
         ];
         validChatMessages.forEach(async message => {
             const parsedMessageHtml = new JSDOM(message).window.document;
-            const functionReturnValue = await github.getUpdatedGithubPullRequestInfo(parsedMessageHtml);
+            const functionReturnValue = await github.getUpdatedPrInfo(parsedMessageHtml);
             expect(functionReturnValue).not.to.be.undefined;
         });
+
         const irrelevantMessage = 'This is an unrelated message about a pull request';
-        expect(await github.getUpdatedGithubPullRequestInfo(new JSDOM(irrelevantMessage).window.document)).to.be.undefined;
+        expect(await github.getUpdatedPrInfo(new JSDOM(irrelevantMessage).window.document)).to.be.undefined;
     });
 });

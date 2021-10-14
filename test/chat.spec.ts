@@ -4,7 +4,7 @@ import jsdom from 'jsdom';
 import fetch from 'node-fetch';
 import { newChatEventOccurred } from '../src/chat.js';
 import { Domains } from '../src/domain_stats.js';
-import { indexHelpers } from '../src/index.js';
+import { helpers } from '../src/index.js';
 const { JSDOM } = jsdom;
 
 type ChatMessageActions = 'watch' | 'unwatch' | 'blacklist' | 'unblacklist';
@@ -13,8 +13,7 @@ function getRandomChatMessage(originalChatMessage: string, actionType: ChatMessa
     return originalChatMessage.replace('Auto watch', `Auto ${actionType}`).replace('linuxbuz\\.com', escapedDomain);
 }
 
-describe('chat helpers', function () {
-
+describe('chat helpers', function() {
     this.timeout(5e3); // before hook can timeout
 
     before(async () => await Domains.fetchAllDomainInformation());
@@ -30,23 +29,29 @@ describe('chat helpers', function () {
             getRandomChatMessage(chatMessageContent, 'blacklist', 'domain\\.with\\.many\\.many\\.dots\\.com'),
             getRandomChatMessage(chatMessageContent, 'blacklist', 'nayvi') // test if item is removed from the watchlist
         ].map(message => new JSDOM(message).window.document);
-
+        // "post" messages by triggering the new chat message event
         randomMessages.forEach(message => newChatEventOccurred({ event_type: 1, user_id: 120914, content: message }));
+
+        const {
+            watchedWebsites: watchedDomains,
+            blacklistedWebsites: blacklistedDomains
+        } = Domains;
+
         // random-domain.com was first watched, then unwatched and shouldn't be in the watchlist
-        expect(indexHelpers.isCaught(Domains.watchedWebsitesRegexes, 'random-domain.com')).to.be.false;
-        expect(indexHelpers.isCaught(Domains.blacklistedWebsitesRegexes, 'random-random-domain.com')).to.be.true;
-        expect(indexHelpers.isCaught(Domains.blacklistedWebsitesRegexes, 'tenderpublish')).to.be.false; // was unblacklisted
-        expect(indexHelpers.isCaught(Domains.watchedWebsitesRegexes, 'domain.with.a.few.dots.com')).to.be.true;
-        expect(indexHelpers.isCaught(Domains.blacklistedWebsitesRegexes, 'domain.with.many.many.dots.com')).to.be.true;
+        expect(helpers.isCaught(watchedDomains, 'random-domain.com')).to.be.false;
+        expect(helpers.isCaught(blacklistedDomains, 'random-random-domain.com')).to.be.true;
+        expect(helpers.isCaught(blacklistedDomains, 'tenderpublish')).to.be.false; // was unblacklisted
+        expect(helpers.isCaught(watchedDomains, 'domain.with.a.few.dots.com')).to.be.true;
+        expect(helpers.isCaught(blacklistedDomains, 'domain.with.many.many.dots.com')).to.be.true;
 
         // nayvi was blacklisted, therefore it shouldn't be in the watchlist, but in the blacklist
-        expect(indexHelpers.isCaught(Domains.watchedWebsitesRegexes, 'nayvi')).to.be.false;
-        expect(indexHelpers.isCaught(Domains.blacklistedWebsitesRegexes, 'nayvi')).to.be.true;
+        expect(helpers.isCaught(watchedDomains, 'nayvi')).to.be.false;
+        expect(helpers.isCaught(blacklistedDomains, 'nayvi')).to.be.true;
 
         // a user id other than SD's one shouldn't change the watchlist or the blacklist
         const randomMessage = new JSDOM(getRandomChatMessage(chatMessageContent, 'watch', 'example\\.com')).window.document;
         newChatEventOccurred({ event_type: 1, user_id: 123456, content: randomMessage }); // not Smokey's id
-        newChatEventOccurred({ event_type: 12, user_id: 120914, content: randomMessage }); // not en event type we're interested in
-        expect(indexHelpers.isCaught(Domains.watchedWebsitesRegexes, 'example.com')).to.be.false;
+        newChatEventOccurred({ event_type: 12, user_id: 120914, content: randomMessage }); // not interested in that event type
+        expect(helpers.isCaught(watchedDomains, 'example.com')).to.be.false;
     });
 });
