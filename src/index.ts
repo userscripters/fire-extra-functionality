@@ -164,7 +164,7 @@ function updateStackSearchResultCount(domainName: string): void {
         seHitCountElement.innerHTML = `SE: ${hitCount}`;
         seHitCountElement.setAttribute('fire-tooltip', tooltipText);
         updateDomainInformation(domainName);
-    }).catch(error => {
+    }).catch((error: string) => {
         toastr.error(error);
         console.error(error);
     });
@@ -203,7 +203,7 @@ async function addHtmlToFirePopup(): Promise<void> {
 
     Domains.triggerDomainUpdate(domainIdsValid)
         .then(domainNames => domainNames.forEach(name => updateDomainInformation(name)))
-        .catch(error => toastr.error(error));
+        .catch((error: string) => toastr.error(error));
 
     domains.map(item => item.domain).forEach(domainName => {
         Domains.allDomainInformation[domainName] = {} as DomainStats[''];
