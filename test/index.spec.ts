@@ -24,7 +24,7 @@ describe('index helpers', () => {
 
     it('should return valid and correct MS search URLs', () => {
         // test the whitelisted domains and the redirectors which are all valid domains
-        Domains.whitelistedDomains.concat(Domains.redirectors).split('\n').forEach(domainName => {
+        Domains.whitelistedDomains.concat(Domains.redirectors).forEach(domainName => {
             const urlObject = new URL(helpers.getMetasmokeSearchUrl(domainName));
             expect(urlObject.searchParams.get('body')).to.be.equal(`(?s:\\b${domainName}\\b)`);
         });

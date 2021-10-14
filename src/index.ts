@@ -223,7 +223,7 @@ async function addHtmlToFirePopup(): Promise<void> {
             domainItem.append(createTag('whitelisted'));
             return;
         } else if (Domains.redirectors.includes(domainName)) {
-            domainItem.append(createTag('redirector'));
+            domainItem.append(createTag('shortener'));
             return;
         }
 

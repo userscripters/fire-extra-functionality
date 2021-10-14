@@ -34,8 +34,8 @@ export class Domains {
     public static blacklistedWebsites: RegExp[];
     public static githubPullRequests: GithubApiInformation[];
 
-    public static whitelistedDomains: string;
-    public static redirectors: string;
+    public static whitelistedDomains: string[];
+    public static redirectors: string[];
 
     public static async fetchAllDomainInformation(): Promise<void> {
         // nothing to do; all information is successfully fetched
@@ -69,8 +69,8 @@ export class Domains {
         this.blacklistedWebsites = getRegexesFromTxtFile(blacklistedWebsites, 0);
         this.githubPullRequests = parsePullRequestDataFromApi(githubPrs);
 
-        this.whitelistedDomains = whitelistedDomains;
-        this.redirectors = redirectors;
+        this.whitelistedDomains = whitelistedDomains.split('\n');
+        this.redirectors = redirectors.split('\n');
     }
 
     public static async getTpFpNaaCountFromDomains(domainIds: number[]): Promise<MetasmokeDomainStats> {
