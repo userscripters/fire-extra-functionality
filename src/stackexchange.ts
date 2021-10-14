@@ -12,21 +12,33 @@ function getSeSearchErrorMessage(status: number, statusText: string, domain: str
 }
 
 // returns the number of hits given the SE search result page HTML
-function getSeResultCount (pageHtml: Document): string {
-    return pageHtml.querySelector('.results-header h2')?.textContent?.trim().replace(/,/g, '').match(/\d+/)?.[0] || '0';
+function getSeResultCount(pageHtml: Document): string {
+    return pageHtml
+        .querySelector('.results-header h2') // the results element
+        ?.textContent // .innerText for some reason doesn't work in testing
+        ?.trim() // textContent includes some spaces, trim them
+        .replace(/,/g, '') // 5,384 => 5384
+        .match(/\d+/)?.[0] || '0'; // get the count
 }
 
 export function getSeSearchResultsForDomain(domain: string): Promise<string> {
     const requestUrl = seSearchPage + encodeURIComponent(domain);
+
     return new Promise<string>((resolve, reject) => {
         GM_xmlhttpRequest({
             method: 'GET',
             url: requestUrl,
             onload: response => {
-                if (response.status !== 200) reject(getSeSearchErrorMessage(response.status, response.statusText, domain));
+                if (response.status !== 200) {
+                    const errorMessage = getSeSearchErrorMessage(response.status, response.statusText, domain);
+
+                    return reject(errorMessage);
+                }
+
                 const parsedResponse = new DOMParser().parseFromString(response.responseText, 'text/html');
                 const resultCount = Number(getSeResultCount(parsedResponse));
                 const shortenedResultCount = getShortenedResultCount(resultCount);
+
                 resolve(shortenedResultCount);
             },
             onerror: errorResponse => reject(getSeSearchErrorMessage(errorResponse.status, errorResponse.statusText, domain))

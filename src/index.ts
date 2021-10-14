@@ -1,15 +1,28 @@
-import * as github from './github.js';
-import * as metasmoke from './metasmoke.js';
-import * as chat from './chat.js';
-import * as stackexchange from './stackexchange.js';
-import { Domains } from './domain_stats.js';
+import { getPendingPrElement } from './github.js';
+import { getAllDomainsFromPost } from './metasmoke.js';
+import { getSeSearchResultsForDomain } from './stackexchange.js';
+import { Domains, DomainStats } from './domain_stats.js';
+import {
+    ChatObject,
+    ChatParsedEvent,
+    addActionListener,
+    newChatEventOccurred
+} from './chat.js';
+import {
+    getWatchBlacklistButtons,
+    getResultsContainer,
+    getInfoContainer,
+    getTick,
+    getCross,
+    createTag
+} from './dom_utils.js';
 
 export interface Toastr {
     success(message: string): void;
     error(message: string): void;
 }
 
-declare const CHAT: chat.ChatObject;
+declare const CHAT: ChatObject;
 declare const toastr: Toastr;
 declare const fire: {
     reportCache: {
@@ -19,77 +32,153 @@ declare const fire: {
 
 const metasmokeSearchUrl = 'https://metasmoke.erwaysoftware.com/search';
 
-const waitGifHtml = '<img class="fire-extra-wait" src="/content/img/progress-dots.gif">';
-const greenTick = '<span class="fire-extra-green"> ✓</span>', redCross = '<span class="fire-extra-red"> ✗</span>';
+// export in an object for the tests
+export const helpers = {
+    // should be the same as "See the MS search here" text in PRs
+    getMetasmokeSearchUrl: (domain: string): string => {
+        const bodyParam = `(?s:\\b${domain}\\b)`;
+        const parameters = `?utf8=✓&body_is_regex=1&body=${bodyParam}`;
+        const fullUrl = metasmokeSearchUrl + parameters;
 
-export const indexHelpers = {
-    getMetasmokeSearchUrl: (domain: string): string =>
-        encodeURI(`${metasmokeSearchUrl}?utf8=✓&body_is_regex=1&body=(?s:\\b${domain}\\b)`), // returns an MS search URL for a domain
-    // According to https://charcoal-se.org/smokey/Guidance-for-Blacklisting-and-Watching (as much as possible at least)
-    // TP count between 1 and 5, there must be no FPs.
-    qualifiesForWatch: ([tpCount, fpCount, naaCount]: number[], seHits: string): boolean =>
-        tpCount >= 1 && tpCount < 5 && fpCount + naaCount === 0 && Number(seHits) < 10,
-    // "The site has at least five hits in metasmoke, with no false positives". Assumes that the current post is <=6 months old.
-    qualifiesForBlacklist: ([tpCount, fpCount, naaCount]: number[], seHits: string): boolean =>
-        tpCount >= 5 && fpCount + naaCount === 0 && Number(seHits) < 5,
-    isCaught: (regexesArray: RegExp[], domain: string): boolean => regexesArray.some(regex => regex.test(domain)),
+        return encodeURI(fullUrl);
+    },
+
+    // Follow https://charcoal-se.org/smokey/Guidance-for-Blacklisting-and-Watching:
+
+    qualifiesForWatch: ([tpCount, fpCount, naaCount]: number[], seHits: string): boolean => {
+        return tpCount >= 1 // tp count between 1
+            && tpCount < 5 // and 5
+            && fpCount + naaCount === 0 // no FPs/NAAs
+            && Number(seHits) < 10; // less than 10 results in SE search
+    },
+
+    qualifiesForBlacklist: ([tpCount, fpCount, naaCount]: number[], seHits: string): boolean => {
+        // assume the post is <=6 months old
+        return tpCount >= 5 // "The site has at least five hits in metasmoke,
+            && fpCount + naaCount === 0 // with no false positives"
+            && Number(seHits) < 5; // not explicitly mentioned, but thought it's a good limit
+    },
+
+    // given a regexes array and a domain, find if the latter is matched by any items in the former
+    isCaught: (regexes: RegExp[], domain: string): boolean => regexes.some(regex => regex.test(domain)),
+
     // get the id the domain li has - dots are replaced with dash
-    getDomainId: (domainName: string): string => `fire-extra-${domainName.replace(/\./g, '-')}`
+    getDomainId: (domainName: string): string => `fire-extra-${domainName.replace(/\./g, '-')}`,
+
+    // helper to pluralise strings
+    pluralise: (word: string, count: number): string => `${word}${count === 1 ? '' : 's'}`,
+
+    // the tooltip text of 👀 or 🚫
+    getActionDone: (action: 'watched' | 'blacklisted', isDone: boolean): string => {
+        const yesNo = isDone ? 'yes' : 'no';
+
+        return `${action}: ${yesNo}`;
+    },
+
+    // the tooltip text of !!/watch, !!/blacklist buttons
+    getButtonsText: (action: 'watch' | 'blacklist', domain: string, done: boolean): string => {
+        const command = action === 'watch' ? '!!/watch-' : '!!/blacklist-website-';
+        const alreadyDone = 'action already taken';
+
+        return done
+            ? alreadyDone
+            : `${command} ${domain}`;
+    }
 };
 
 function updateDomainInformation(domainName: string): void {
-    const seResultCount = Domains.allDomainInformation[domainName]?.stackexchange;
-    const metasmokeStats = Domains.allDomainInformation[domainName]?.metasmoke;
-    // the SE hits might be zero, so using !hits returns true!!
-    if ((!seResultCount && seResultCount !== '0') || !metasmokeStats?.length) return;
+    const {
+        stackexchange: seResultCount,
+        metasmoke: metasmokeStats
+    } = Domains.allDomainInformation[domainName];
 
-    const isWatched = indexHelpers.isCaught(Domains.watchedWebsitesRegexes, domainName);
-    const isBlacklisted = indexHelpers.isCaught(Domains.blacklistedWebsitesRegexes, domainName);
-    const escapedDomain = domainName.replace(/\./, '\\.'); // escape dots
+    if (!seResultCount || !metasmokeStats?.length) return;
+
+    const isWatched = helpers.isCaught(Domains.watchedWebsites, domainName);
+    const isBlacklisted = helpers.isCaught(Domains.blacklistedWebsites, domainName);
+    const escapedDomain = domainName.replace(/\./g, '\\.'); // escape dots
+
+    const qualifiesForWatch = helpers.qualifiesForWatch(metasmokeStats, seResultCount);
+    const qualifiesForBlacklist = helpers.qualifiesForBlacklist(metasmokeStats, seResultCount);
+
     const watch = {
-        human: 'watched: ' + (isWatched ? 'yes' : 'no'),
-        tooltip: isWatched || isBlacklisted ? 'domain already watched' : `!!/watch- ${escapedDomain}`,
-        suggested: indexHelpers.qualifiesForWatch(metasmokeStats, seResultCount) && !isWatched && !isBlacklisted,
+        human: helpers.getActionDone('watched', isWatched),
+        tooltip: helpers.getButtonsText('watch', escapedDomain, isWatched || isBlacklisted),
+        suggested: qualifiesForWatch && !isWatched && !isBlacklisted,
+        // note the button should be disabled if the domain is blacklisted
         class: `fire-extra-${isWatched || isBlacklisted ? 'disabled' : 'watch'}`
     };
+
     const blacklist = {
-        human: 'blacklisted: ' + (isBlacklisted ? 'yes' : 'no'),
-        tooltip: isBlacklisted ? 'domain already blacklisted' : `!!/blacklist-website- ${escapedDomain}`,
-        suggested: indexHelpers.qualifiesForBlacklist(metasmokeStats, seResultCount) && !isBlacklisted,
+        human: helpers.getActionDone('blacklisted', isBlacklisted),
+        tooltip: helpers.getButtonsText('blacklist', escapedDomain, isBlacklisted),
+        suggested: qualifiesForBlacklist && !isBlacklisted,
         class: `fire-extra-${isBlacklisted ? 'disabled' : 'blacklist'}`
     };
 
-    const domainId = indexHelpers.getDomainId(domainName), domainElementLi = document.getElementById(domainId);
-    const watchButton = domainElementLi?.querySelector('.fire-extra-watch'), blacklistButton = domainElementLi?.querySelector('.fire-extra-blacklist');
-    const watchInfo = domainElementLi?.querySelector('.fire-extra-watch-info'), blacklistInfo = domainElementLi?.querySelector('.fire-extra-blacklist-info');
+    const domainId = helpers.getDomainId(domainName);
+    const domainLi = document.getElementById(domainId);
 
-    // add the tooltip to the emojis, e.g. watched: yes, blacklisted: no
-    watchInfo?.setAttribute('fire-tooltip', watch.human);
-    blacklistInfo?.setAttribute('fire-tooltip', blacklist.human);
-    // append the tick or the cross (indicated if it should be watched/blacklisted or not)
+    const watchButton = domainLi?.querySelector('.fire-extra-watch');
+    const blacklistButton = domainLi?.querySelector('.fire-extra-blacklist');
+    const watchInfo = domainLi?.querySelector('.fire-extra-watch-info');
+    const blacklistInfo = domainLi?.querySelector('.fire-extra-blacklist-info');
+
+    // append the tick or the cross (indicate if domain should be watched/blacklisted or not)
     if (!watchInfo || !blacklistInfo) return;
 
-    watchInfo.innerHTML = '👀: ' + (isWatched ? greenTick : redCross);
-    blacklistInfo.innerHTML = '🚫: ' + (isBlacklisted ? greenTick : redCross);
-    if (!watchButton || !blacklistButton) return; // the buttons do not exist if a PR is pending
+    // add the tooltip to the emojis, e.g. watched: yes, blacklisted: no
+    watchInfo.setAttribute('fire-tooltip', watch.human);
+    blacklistInfo.setAttribute('fire-tooltip', blacklist.human);
 
-    // add some ticks if the domain should be watch/blacklisted
-    if (watch.suggested) watchButton.insertAdjacentHTML('afterend', greenTick);
-    if (blacklist.suggested) blacklistButton.insertAdjacentHTML('afterend', greenTick);
+    watchInfo.replaceChildren('👀: ', isWatched ? getTick() : getCross());
+    blacklistInfo.replaceChildren('🚫: ', isBlacklisted ? getTick() : getCross());
+
+    // the buttons do not exist if a PR is pending
+    if (!watchButton || !blacklistButton) return;
+
+    // add ticks if the domain should be watch/blacklisted
+    if (watch.suggested) watchButton.append(' ', getTick());
+    if (blacklist.suggested) blacklistButton.append(' ', getTick());
+
     // disable buttons if necessary
-    if (!watchButton.classList.contains(watch.class)) watchButton.classList.add(watch.class);
-    if (!blacklistButton.classList.contains(blacklist.class)) blacklistButton.classList.add(blacklist.class);
+    watchButton.classList.add(watch.class);
+    blacklistButton.classList.add(blacklist.class);
+
     // add the tooltips (either !!/<action> example\.com or domain already <action>)
     watchButton.setAttribute('fire-tooltip', watch.tooltip);
     blacklistButton.setAttribute('fire-tooltip', blacklist.tooltip);
 }
 
+function updateStackSearchResultCount(domainName: string): void {
+    getSeSearchResultsForDomain(domainName).then(hitCount => {
+        const domainId = helpers.getDomainId(domainName);
+        const domainElementLi = document.getElementById(domainId);
+        if (!domainElementLi) return; // in case the popup is closed before the request is finished
+
+        Domains.allDomainInformation[domainName].stackexchange = hitCount;
+        const seHitCountElement = domainElementLi.querySelector('.fire-extra-se-results a');
+        if (!seHitCountElement) return;
+
+        const tooltipText = `${hitCount} ${helpers.pluralise('hit', Number(hitCount))} on SE`;
+        seHitCountElement.innerHTML = `SE: ${hitCount}`;
+        seHitCountElement.setAttribute('fire-tooltip', tooltipText);
+        updateDomainInformation(domainName);
+    }).catch(error => {
+        toastr.error(error);
+        console.error(error);
+    });
+}
+
 async function addHtmlToFirePopup(): Promise<void> {
     const reportedPostDiv = document.querySelector('.fire-reported-post');
-    const fireMetasmokeButton = document.querySelector<HTMLAnchorElement>('.fire-metasmoke-button');
-    const nativeSeLink = [...new URL(fireMetasmokeButton?.href || '').searchParams][0][1];
-    const metasmokePostId = fire.reportCache[nativeSeLink].id; // taking advantage of FIRE's cache :)
-    const domains = await metasmoke.getAllDomainsFromPost(metasmokePostId);
+    const fireMsButton = document.querySelector<HTMLAnchorElement>('.fire-metasmoke-button');
+    const nativeSeLink = [...new URL(fireMsButton?.href || '').searchParams][0][1];
+
+    // take advantage of FIRE's cache :)
+    const metasmokePostId = fire.reportCache[nativeSeLink].id;
+    const domains = await getAllDomainsFromPost(metasmokePostId);
+
     if (!domains.length) return; // no domains; nothing to do
 
     const divider = document.createElement('hr');
@@ -98,7 +187,8 @@ async function addHtmlToFirePopup(): Promise<void> {
 
     const header = document.createElement('h3');
     header.innerText = 'Domains';
-    dataWrapperElement.appendChild(header);
+    dataWrapperElement.append(header);
+
     reportedPostDiv?.insertAdjacentElement('afterend', dataWrapperElement);
     reportedPostDiv?.insertAdjacentElement('afterend', divider);
 
@@ -106,66 +196,73 @@ async function addHtmlToFirePopup(): Promise<void> {
     domainList.classList.add('fire-extra-domains-list');
 
     // exclude whitelisted domains, redirectors and domains that have a pending PR
-    const domainIdsValid = domains.filter(domainObject => !Domains.whitelistedDomains.includes(domainObject.domain)
-        && !github.redirectors.includes(domainObject.domain)).map(item => item.id);
+    const domainIdsValid = domains.filter(
+        domainObject => !Domains.whitelistedDomains.includes(domainObject.domain)
+                     && !Domains.redirectors.includes(domainObject.domain)
+    ).map(item => item.id);
 
     Domains.triggerDomainUpdate(domainIdsValid)
-        .then(domainNames => domainNames.forEach(domainName => updateDomainInformation(domainName)))
+        .then(domainNames => domainNames.forEach(name => updateDomainInformation(name)))
         .catch(error => toastr.error(error));
 
     domains.map(item => item.domain).forEach(domainName => {
-        Domains.allDomainInformation[domainName] = {} as { metasmoke: number[]; stackexchange: string; };
+        Domains.allDomainInformation[domainName] = {} as DomainStats[''];
+
         const domainItem = document.createElement('li');
         domainItem.innerHTML = domainName + '&nbsp;';
-        domainItem.id = indexHelpers.getDomainId(domainName);
-        domainList.appendChild(domainItem);
+        domainItem.id = helpers.getDomainId(domainName);
+        domainList.append(domainItem);
 
-        // if the domain is whitelisted or a redirector, don't search for TPs/FPs/NAAs. They often have too many hits on SE/MS, and they make the script slower
+        // TODO also address #ip and #stuff-up
+        //      Stack Exchange URLs https://metasmoke.erwaysoftware.com/domains/groups/14
+        // TODO address redirectors/YT videos (watch the video URL, etc.)
+
+        // If the domain is whitelisted or a redirector, don't search for TPs/FPs/NAAs.
+        // They often have too many hits on SE/MS, and they make the script slower
         if (Domains.whitelistedDomains.includes(domainName)) {
-            domainItem.insertAdjacentHTML('beforeend', '<span class="fire-extra-tag">#whitelisted</span>');
+            domainItem.append(createTag('whitelisted'));
             return;
-        } else if (github.redirectors.includes(domainName)) {
-            domainItem.insertAdjacentHTML('beforeend', '<span class="fire-extra-tag">#redirector</span>');
+        } else if (Domains.redirectors.includes(domainName)) {
+            domainItem.append(createTag('redirector'));
             return;
         }
 
-        const githubPrOpenItem = Domains.githubPullRequests.find(item => item.regex.test(domainName));
+        const pullRequests = Domains.githubPullRequests;
+        const githubPrOpenItem = pullRequests.find(({ regex }) => regex.test(domainName));
         const escapedDomain = domainName.replace(/\./g, '\\.'); // escape dots
-        // use a function in case githubPrOpenItem is null (then it'd throw an error because we use .id)
-        const watchBlacklistButtons = '<a class="fire-extra-watch">!!/watch</a>&nbsp;&nbsp;<a class="fire-extra-blacklist">!!/blacklist</a>&nbsp;&nbsp;';
-        const actionsAreaHtml = githubPrOpenItem ? github.getPendingPrHtml(githubPrOpenItem) : watchBlacklistButtons;
-        const msSearchUrl = indexHelpers.getMetasmokeSearchUrl(escapedDomain);
 
-        domainItem.insertAdjacentHTML('beforeend',
-            `(
-           <a href="${msSearchUrl}">MS</a>: <span class="fire-extra-ms-stats">${waitGifHtml}</span>&nbsp;
-         |&nbsp;
-           <span class="fire-extra-se-results"><a href="${stackexchange.seSearchPage}${domainName}">${waitGifHtml}</a></span>
-         )&nbsp;&nbsp;${actionsAreaHtml}
-         (<span class="fire-extra-watch-info">👀: ${waitGifHtml}</span>/<span class="fire-extra-blacklist-info">🚫: ${waitGifHtml}</span>)`
-                .replace(/^\s+/mg, '').replace(/\n/g, ''));
+        /* Create the HTML for the domain li */
+        // Let's split it into 4 parts:
+        // - The domain text
+        // - The results: (MS: 10, 3, 2 | SE: 10)
+        // - The actions area: !!/watch !!/blacklist
+        //                 or: PR#3948 pending !!/approve
+        // - The information area: (👀: ✗/🚫: ✓)
 
-        stackexchange.getSeSearchResultsForDomain(domainName).then(hitCount => {
-            const domainElementLi = document.getElementById(indexHelpers.getDomainId(domainName));
-            if (!domainElementLi) return; // in case the popup is closed before the request is finished
+        const buttonContainer = getWatchBlacklistButtons();
+        const actionsArea = githubPrOpenItem
+            ? getPendingPrElement(githubPrOpenItem) // PR pending
+            : buttonContainer;
 
-            Domains.allDomainInformation[domainName].stackexchange = hitCount;
-            const seHitCountElement = domainElementLi.querySelector('.fire-extra-se-results a');
-            if (!seHitCountElement) return;
+        const resultsContainer = getResultsContainer(escapedDomain, domainName);
+        const infoContainer = getInfoContainer();
 
-            seHitCountElement.innerHTML = `SE: ${hitCount}`;
-            updateDomainInformation(domainName);
-        }).catch(error => {
-            toastr.error(error);
-            console.error(error);
-        });
+        domainItem.append(resultsContainer, actionsArea, infoContainer);
 
-        chat.addActionListener(domainItem.querySelector('.fire-extra-watch'), 'watch', escapedDomain);
-        chat.addActionListener(domainItem.querySelector('.fire-extra-blacklist'), 'blacklist', escapedDomain);
-        if (githubPrOpenItem) chat.addActionListener(domainItem.querySelector('.fire-extra-approve'), 'approve', githubPrOpenItem.id);
+        updateStackSearchResultCount(domainName);
+
+        const watchButton = domainItem.querySelector<HTMLElement>('.fire-extra-watch');
+        const blacklistButton = domainItem.querySelector<HTMLElement>('.fire-extra-blacklist');
+
+        addActionListener(watchButton);
+        addActionListener(blacklistButton);
+        if (githubPrOpenItem) {
+            const approveButton = domainItem.querySelector<HTMLElement>('.fire-extra-approve');
+            addActionListener(approveButton);
+        }
     });
 
-    dataWrapperElement.appendChild(domainList);
+    dataWrapperElement.append(domainList);
 }
 
 void (async function(): Promise<void> {
@@ -175,10 +272,11 @@ void (async function(): Promise<void> {
     CHAT.addEventHandlerHook(event => {
         const eventToPass = Object.assign({
             ...event,
-            // because we can't use DOMParser with tests, newChatEventOccurred has to accept a Document argument for content
+            // because we can't use DOMParser with tests,
+            // newChatEventOccurred has to accept a Document argument for content
             content: new DOMParser().parseFromString(event.content, 'text/html')
-        }) as chat.ChatParsedEvent;
-        chat.newChatEventOccurred(eventToPass);
+        }) as ChatParsedEvent;
+        newChatEventOccurred(eventToPass);
     });
 
     const observer = new MutationObserver(mutations => {
@@ -204,13 +302,38 @@ void (async function(): Promise<void> {
   margin-left: 12px;
 }
 
-.fire-extra-tp, .fire-extra-green { color: #3c763d; }
-.fire-extra-fp, .fire-extra-red { color: #a94442; }
-.fire-extra-naa { color: #8a6d3b; }
-.fire-extra-blacklist, .fire-extra-watch, .fire-extra-approve { cursor: pointer; }
-.fire-popup { width: 700px !important; }
-.fire-extra-none { display: none; }
-.fire-extra-wait { padding-bottom: 5px; }
+.fire-extra-domains-list div {
+    display: inline;
+}
+
+.fire-extra-tp, .fire-extra-green {
+    color: #3c763d;
+}
+
+.fire-extra-fp, .fire-extra-red {
+    color: #a94442;
+}
+
+.fire-extra-naa {
+    color: #8a6d3b;
+}
+
+.fire-extra-blacklist, .fire-extra-watch, .fire-extra-approve {
+    cursor: pointer;
+    margin-right: 7px;
+}
+
+.fire-popup {
+    width: 700px !important;
+}
+
+.fire-extra-none {
+    display: none;
+}
+
+.fire-extra-wait {
+    padding-bottom: 5px;
+}
 
 /* copied from the MS CSS for domain tags */
 .fire-extra-tag {
