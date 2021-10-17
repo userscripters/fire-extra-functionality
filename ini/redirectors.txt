@@ -29,6 +29,7 @@ shrinkme.io
 t.co
 t.me
 tinyurl.com
+youtu.be
 v.ht
 za.gl
 zee.gl
