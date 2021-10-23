@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-expressions */
 import { expect } from 'chai';
 import { Domains } from '../src/domain_stats.js';
 import { helpers } from '../src/index.js';
@@ -24,10 +23,14 @@ describe('index helpers', () => {
 
     it('should return valid and correct MS search URLs', () => {
         // test the whitelisted domains and the redirectors which are all valid domains
-        Domains.whitelistedDomains.concat(Domains.redirectors).forEach(domainName => {
-            const urlObject = new URL(helpers.getMetasmokeSearchUrl(domainName));
-            expect(urlObject.searchParams.get('body')).to.be.equal(`(?s:\\b${domainName}\\b)`);
-        });
+        [...Domains.whitelistedDomains, ...Domains.redirectors]
+            .filter(domain => domain.includes('.')) // exclude exception
+            .forEach(domainName => {
+                const msSearchUrl = helpers.getMetasmokeSearchUrl(domainName);
+                const urlObject = new URL(msSearchUrl);
+
+                expect(urlObject.searchParams.get('body')).to.be.equal(`(?s:\\b${domainName}\\b)`);
+            });
     });
 
     it('should figure out if a domain is caught or not', () => {
@@ -39,13 +42,14 @@ describe('index helpers', () => {
         const isWatched = (keyword: string): boolean => helpers.isCaught(watched, keyword);
         const isBlacklisted = (keyword: string): boolean => helpers.isCaught(blacklisted, keyword);
 
-        const validWatches = ['essayssos.com', 'trimfire', 'dream-night-tours'];
+        const validWatches = ['essayssos.com', 'trimfire', 'dream-night-tours', '3vcWir3'];
         const invalidWatches = ['non-existent-keyword, google.com'];
         validWatches.forEach(keyword => expect(isWatched(keyword)).to.be.true);
         invalidWatches.forEach(keyword => expect(isWatched(keyword)).to.be.false);
 
-        const validBlacklists = ['powerigfaustralia', 'ewebtonic.in', 'beautyskin'];
+        const validBlacklists = ['powerigfaustralia', 'ewebtonic.in', 'beautyskin', 'd680adc632091138ed9fd09659e15dc9'];
         const invalidBlacklists = invalidWatches;
+
         validBlacklists.forEach(keyword => expect(isBlacklisted(keyword)).to.be.true);
         invalidBlacklists.forEach(keyword => expect(isBlacklisted(keyword)).to.be.false);
     });
@@ -64,14 +68,33 @@ describe('index helpers', () => {
     });
 
     it('should correctly fetch accurate tooltip texts for !!/watch and !!/blacklist', () => {
-        const watchedNoAction = helpers.getButtonsText('watch', 'example\\.com', true);
-        const blacklistedNoAction = helpers.getButtonsText('blacklist', 'example\\.com', true);
+        const watchedNoAction = helpers.getButtonsText('watch', 'example.com', true);
+        const blacklistedNoAction = helpers.getButtonsText('blacklist', 'example.com', true);
 
-        const watchExampleCom = helpers.getButtonsText('watch', 'example\\.com', false);
-        const blacklistManyDots = helpers.getButtonsText('blacklist', 'many\\.dots\\.\\.com', false);
+        const watchExampleCom = helpers.getButtonsText('watch', 'example.com', false);
+        const blacklistManyDots = helpers.getButtonsText('blacklist', 'many.dots..com', false);
 
         expect(watchedNoAction).to.be.equal(blacklistedNoAction);
         expect(watchExampleCom).to.be.equal('!!/watch- example\\.com');
         expect(blacklistManyDots).to.be.equal('!!/blacklist-website- many\\.dots\\.\\.com');
+
+        const watchShortenerPath = helpers.getButtonsText('watch', 'FNEuyd', false, 'goo.gl');
+        expect(watchShortenerPath).to.be.equal('!!/watch- (?-i:FNEuyd)(?#goo.gl)');
+    });
+
+    it('should correctly fetch the correct regex for paths of shorteners', () => {
+        Object.entries({
+            '3vcWir3': ['bit.ly', '(?-i:3vcWir3)(?#bit.ly)'],
+            'FNEuyd': ['goo.gl', '(?-i:FNEuyd)(?#goo.gl)'],
+            'KdxEAt91D7k': ['youtu.be', '(?-i:KdxEAt91D7k)(?#youtu.be)']
+        }).forEach(([path, info]) => {
+            const [domain, expectedValue] = info;
+            const regexWithDomain = helpers.getRegexForPathShortener(path, domain);
+            const regexWithoutDomain = helpers.getRegexForPathShortener(path);
+            const expectedNoComment = expectedValue.replace(/\(\?#.*/, '');
+
+            expect(regexWithDomain).to.be.equal(expectedValue);
+            expect(regexWithoutDomain).to.be.equal(expectedNoComment);
+        });
     });
 });

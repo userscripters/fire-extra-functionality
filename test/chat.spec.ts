@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-expressions */
 import { expect } from 'chai';
 import jsdom from 'jsdom';
 import fetch from 'node-fetch';
@@ -20,17 +19,28 @@ describe('chat helpers', function() {
     it('should update watches or blacklists based on the content of a chat message', async () => {
         const chatMessageCall = await fetch('https://chat.stackexchange.com/message/58329215');
         const chatMessageContent = await chatMessageCall.text();
-        const randomMessages = [
-            getRandomChatMessage(chatMessageContent, 'watch', 'random-domain\\.com'),
-            getRandomChatMessage(chatMessageContent, 'blacklist', 'random-random-domain\\.com'),
-            getRandomChatMessage(chatMessageContent, 'unwatch', 'random-domain\\.com'),
-            getRandomChatMessage(chatMessageContent, 'unblacklist', 'tenderpublish'), // keyword actually exists
-            getRandomChatMessage(chatMessageContent, 'watch', 'domain\\.with\\.a\\.few\\.dots\\.com'),
-            getRandomChatMessage(chatMessageContent, 'blacklist', 'domain\\.with\\.many\\.many\\.dots\\.com'),
-            getRandomChatMessage(chatMessageContent, 'blacklist', 'nayvi') // test if item is removed from the watchlist
-        ].map(message => new JSDOM(message).window.document);
-        // "post" messages by triggering the new chat message event
-        randomMessages.forEach(message => newChatEventOccurred({ event_type: 1, user_id: 120914, content: message }));
+
+        const messages = [
+            'watch random-domain\\.com',
+            'blacklist random-random-domain\\.com',  
+            'unwatch random-domain\\.com',
+            'unblacklist tenderpublish',
+            'watch domain\\.with\\.a\\.few\\.dots\\.com',
+            'blacklist domain\\.with\\.many\\.many\\.dots\\.com',
+            'blacklist nayvi' // the keyword is watched
+        ];
+        messages
+            .map(message => {
+                const messageSplit = message.split(' ');
+                const actionType = messageSplit[0] as ChatMessageActions;
+                const domain = messageSplit[1];
+
+                const fullMessage = getRandomChatMessage(chatMessageContent, actionType, domain)
+
+                return new JSDOM(fullMessage).window.document;
+            })
+            // "post messages"
+            .forEach(message => newChatEventOccurred({ event_type: 1, user_id: 120914, content: message }));
 
         const {
             watchedWebsites: watchedDomains,

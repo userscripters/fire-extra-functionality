@@ -1,13 +1,20 @@
-/* eslint-disable no-tabs, no-unused-expressions */
 import { expect } from 'chai';
 import { helpers } from '../src/index.js';
-import * as github from '../src/github.js';
+import { getPendingPrElement } from '../src/dom_utils.js';
+import {
+    GithubApiResponse,
+    getRegexesFromTxtFile,
+    getUpdatedPrInfo,
+    parsePullRequestDataFromApi
+} from '../src/github.js';
 import jsdom from "jsdom";
+
 const { JSDOM } = jsdom;
 
 global.document = new JSDOM().window.document;
 
-const watchedKeywordsExample = String.raw`1494929269	tripleee	thewellnesscorner\.com
+const watchedKeywordsExample = String.raw
+`1494929269	tripleee	thewellnesscorner\.com
 1494929399	tripleee	optisolbusiness\.com
 1494997469	tripleee	careinfo\.in
 1494997580	tripleee	carebaba\.com
@@ -15,7 +22,8 @@ const watchedKeywordsExample = String.raw`1494929269	tripleee	thewellnesscorner\
 1495002561	tripleee	erozon
 1495005325	tripleee	onlinesupplementworld\.com
 1495006487	tripleee	ahealthadvisory\.com`;
-const blacklistedKeywordsExample = String.raw`resolit\.us
+const blacklistedKeywordsExample = String.raw
+`resolit\.us
 techinpost\.com
 hackerscontent\.com
 hrsoftwaresolution\.com
@@ -24,7 +32,7 @@ webbuildersguide\.com
 idealshare\.net
 lankabpoacademy\.com`;
 
-const sampleGithubApiResponse: github.GithubApiResponse[] = [
+const sampleGithubApiResponse: GithubApiResponse[] = [
     {
         number: 1,
         title: 'Xnero: Watch goodhousekeeping\\.com',
@@ -58,8 +66,8 @@ const sampleGithubApiResponse: github.GithubApiResponse[] = [
 
 describe('github helpers', () => {
     it('should correctly parse the content of sample keywords files', () => {
-        const watchedParsed = github.getRegexesFromTxtFile(watchedKeywordsExample, 2);
-        const blacklistedParsed = github.getRegexesFromTxtFile(blacklistedKeywordsExample, 0);
+        const watchedParsed = getRegexesFromTxtFile(watchedKeywordsExample, 2);
+        const blacklistedParsed = getRegexesFromTxtFile(blacklistedKeywordsExample, 0);
         const allParsed = watchedParsed.concat(blacklistedParsed);
 
         // for watches we need to split and get the third column
@@ -72,7 +80,7 @@ describe('github helpers', () => {
     });
 
     it('should correctly parse a sample GH API response', () => {
-        const parsedContent = github.parsePullRequestDataFromApi(sampleGithubApiResponse);
+        const parsedContent = parsePullRequestDataFromApi(sampleGithubApiResponse);
         expect(parsedContent.length).to.equal(2);
 
         const [firstItem, secondItem] = parsedContent;
@@ -82,8 +90,8 @@ describe('github helpers', () => {
         const firstExpectedTooltip = 'Xnero wants to watch goodhousekeeping\\.com in PR#1';
         const secondExpectedTooltip = 'username wants to watch some-domain\\.with\\.dots\\.com in PR#4829';
 
-        const firstPrItem = github.getPendingPrElement(firstItem);
-        const secondPrItem = github.getPendingPrElement(secondItem);
+        const firstPrItem = getPendingPrElement(firstItem);
+        const secondPrItem = getPendingPrElement(secondItem);
 
         const firstPrLink = firstPrItem.firstElementChild as HTMLAnchorElement;
         expect(firstPrLink.href).to.be.equal('//github.com/Charcoal-SE/SmokeDetector/pull/1');
@@ -112,11 +120,11 @@ describe('github helpers', () => {
         ];
         validChatMessages.forEach(async message => {
             const parsedMessageHtml = new JSDOM(message).window.document;
-            const functionReturnValue = await github.getUpdatedPrInfo(parsedMessageHtml);
+            const functionReturnValue = await getUpdatedPrInfo(parsedMessageHtml);
             expect(functionReturnValue).not.to.be.undefined;
         });
 
         const irrelevantMessage = 'This is an unrelated message about a pull request';
-        expect(await github.getUpdatedPrInfo(new JSDOM(irrelevantMessage).window.document)).to.be.undefined;
+        expect(await getUpdatedPrInfo(new JSDOM(irrelevantMessage).window.document)).to.be.undefined;
     });
 });
