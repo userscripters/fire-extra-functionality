@@ -1,4 +1,11 @@
-export const seSearchPage = 'https://stackexchange.com/search?q=url%3A';
+export function getSeUrl(searchTerm: string): string {
+    const base = 'https://stackexchange.com/search?q=';
+    const isUrl = searchTerm.includes('.'); // domains include a dot
+
+    return isUrl
+        ? `${base}url%3A${searchTerm}`
+        : `${base}${searchTerm}`;
+}
 
 // https://stackoverflow.com/a/9461657
 export function getShortenedResultCount(number: number): string {
@@ -12,17 +19,18 @@ function getSeSearchErrorMessage(status: number, statusText: string, domain: str
 }
 
 // returns the number of hits given the SE search result page HTML
-function getSeResultCount(pageHtml: Document): string {
+export function getSeResultCount(pageHtml: Document): string {
     return pageHtml
         .querySelector('.results-header h2') // the results element
-        ?.textContent // .innerText for some reason doesn't work in testing
+        ?.textContent // .innerText not implemented in JSDOM
         ?.trim() // textContent includes some spaces, trim them
         .replace(/,/g, '') // 5,384 => 5384
         .match(/\d+/)?.[0] || '0'; // get the count
 }
 
-export function getSeSearchResultsForDomain(domain: string): Promise<string> {
-    const requestUrl = seSearchPage + encodeURIComponent(domain);
+export function getSeSearchResults(term: string): Promise<string> {
+    const encodedTerm = encodeURIComponent(term);
+    const requestUrl = getSeUrl(encodedTerm);
 
     return new Promise<string>((resolve, reject) => {
         GM_xmlhttpRequest({
@@ -30,7 +38,7 @@ export function getSeSearchResultsForDomain(domain: string): Promise<string> {
             url: requestUrl,
             onload: response => {
                 if (response.status !== 200) {
-                    const errorMessage = getSeSearchErrorMessage(response.status, response.statusText, domain);
+                    const errorMessage = getSeSearchErrorMessage(response.status, response.statusText, term);
 
                     return reject(errorMessage);
                 }
@@ -41,7 +49,9 @@ export function getSeSearchResultsForDomain(domain: string): Promise<string> {
 
                 resolve(shortenedResultCount);
             },
-            onerror: errorResponse => reject(getSeSearchErrorMessage(errorResponse.status, errorResponse.statusText, domain))
+            onerror: errorResponse => reject(
+                getSeSearchErrorMessage(errorResponse.status, errorResponse.statusText, term)
+            )
         });
     });
 }

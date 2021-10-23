@@ -88,6 +88,37 @@ export function getGraphQLInformation(idsArray: number[]): Promise<GraphQLRespon
     });
 }
 
+function getPostCounts(parsedHtml: Document): number[] {
+    const tabsSelector = '.nav-tabs li:not([role="presentation"]';
+
+    return [...parsedHtml.querySelectorAll<HTMLAnchorElement>(tabsSelector)]
+        .map(element => /\d+/.exec(element?.textContent?.trim() || '')?.[0])
+        .map(Number);
+}
+
+export function getMsSearchResults(term: string): Promise<number[]> {
+    return new Promise((resolve, reject) => {
+        GM_xmlhttpRequest({
+            method: 'GET',
+            url: `https://metasmoke.erwaysoftware.com/search?utf8=✓&body=${term}`,
+            onload: response => {
+                if (response.status === 200) {
+                    const parsedHtml = new DOMParser().parseFromString(response.responseText, 'text/html');
+
+                    resolve(getPostCounts(parsedHtml));
+                } else {
+                    reject(`Failed to get search results for ${term} on metasmoke search.`);
+                    console.error(response);
+                }
+            },
+            onerror: errorResponse => {
+                console.log(errorResponse);
+                reject(errorResponse.responseText);
+            }
+        });
+    });
+}
+
 export async function getAllDomainsFromPost(metasmokePostId: number): Promise<DomainsForPostIdItems[]> {
     const method = `${metasmokePostId}/domains`;
     const parameters = `?key=${metasmokeApiKey}&filter=${postDomainsApiFilter}&per_page=100`;

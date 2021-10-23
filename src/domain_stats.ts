@@ -9,8 +9,7 @@ import {
     getRegexesFromTxtFile,
     parsePullRequestDataFromApi
 } from './github.js';
-import { Toastr, helpers } from './index.js';
-import { getColouredSpans } from './dom_utils.js';
+import { Toastr } from './index.js';
 import fetch from 'node-fetch';
 
 declare const toastr: Toastr;
@@ -101,22 +100,5 @@ export class Domains {
             console.error('Error while trying to fetch domain stats from GraphiQL.', error);
         }
         return domainStats;
-    }
-
-    public static async triggerDomainUpdate(domainIdsValid: number[]): Promise<string[]> {
-        const domainStats = await this.getTpFpNaaCountFromDomains(domainIdsValid) || {};
-
-        return Object.entries(domainStats).flatMap(([domainName, feedbackCount]) => {
-            const domainId = helpers.getDomainId(domainName);
-            const domainElementLi = document.getElementById(domainId);
-            if (!domainElementLi) return []; // in case the popup is closed before the process is complete
-
-            this.allDomainInformation[domainName].metasmoke = feedbackCount;
-            const metasmokeStatsElement = domainElementLi.querySelector('.fire-extra-ms-stats');
-            if (!metasmokeStatsElement) return [];
-
-            metasmokeStatsElement.replaceChildren(...getColouredSpans(feedbackCount));
-            return [domainName];
-        });
     }
 }

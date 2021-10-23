@@ -28,7 +28,7 @@ interface ChatResponse {
 
 const charcoalRoomId = 11540, smokedetectorId = 120914, metasmokeId = 478536;
 
-async function sendActionMessageToChat(element: HTMLElement): Promise<void> {
+async function sendActionMessageToChat(element: Element): Promise<void> {
     // so that the text in the tooltip is consistent with what's being watched
     const messageToSend = element.getAttribute('fire-tooltip');
 
@@ -57,7 +57,7 @@ async function sendActionMessageToChat(element: HTMLElement): Promise<void> {
     if (!chatResponse.id || !chatResponse.time) throw new Error('Failed to send message to chat!');
 }
 
-export function addActionListener(element: HTMLElement | null,): void {
+export function addActionListener(element: Element | null,): void {
     if (!element) return;
 
     element.addEventListener('click', async () => {
