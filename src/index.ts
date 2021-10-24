@@ -90,7 +90,10 @@ export const helpers = {
 
         const watchValue = domain
             ? helpers.getRegexForPathShortener(term, domain)
-            : term.replace(/\./g, '\\.'); // escape dots
+            : term
+                // https://metasmoke.erwaysoftware.com/domains/groups/17
+                .replace(/blogspot\.\w+$/, 'blogspot') // abc.blogspot.com => abc.blogspot
+                .replace(/\./g, '\\.'); // escape dots
 
         return done
             ? alreadyDone

@@ -80,6 +80,11 @@ describe('index helpers', () => {
 
         const watchShortenerPath = helpers.getButtonsText('watch', 'FNEuyd', false, 'goo.gl');
         expect(watchShortenerPath).to.be.equal('!!/watch- (?-i:FNEuyd)(?#goo.gl)');
+
+        const watchBlogspotCom = helpers.getButtonsText('watch', 'abc.blogspot.com', false);
+        const watchBlogspotDe = helpers.getButtonsText('watch', 'abc.blogspot.de', false);
+
+        expect(watchBlogspotCom).to.be.equal(watchBlogspotDe).to.be.equal('!!/watch- abc\\.blogspot');
     });
 
     it('should correctly fetch the correct regex for paths of shorteners', () => {
