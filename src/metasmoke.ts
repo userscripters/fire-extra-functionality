@@ -111,10 +111,7 @@ export function getMsSearchResults(term: string): Promise<number[]> {
                     console.error(response);
                 }
             },
-            onerror: errorResponse => {
-                console.log(errorResponse);
-                reject(errorResponse.responseText);
-            }
+            onerror: errorResponse => reject(errorResponse.responseText)
         });
     });
 }

@@ -9,43 +9,43 @@
     "ecmaVersion": 6,
     "project": "./tsconfig.json"
   },
-  "plugins": ["@typescript-eslint"],
+  "plugins": [
+    "@typescript-eslint"
+  ],
   "extends": [
-      "eslint:recommended",
-      "plugin:@typescript-eslint/recommended",
-      "plugin:@typescript-eslint/recommended-requiring-type-checking"
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended-requiring-type-checking"
   ],
   "rules": {
-    "arrow-parens": ["error", "as-needed"],
+    "@typescript-eslint/explicit-function-return-type": "warn",
+    "@typescript-eslint/no-misused-promises": ["error", { "checksVoidReturn": false }],
+    "arrow-parens": [ "error", "as-needed" ],
     "arrow-spacing": "error",
     "brace-style": ["error", "1tbs", { "allowSingleLine": true }],
     "dot-notation": "error",
     "eqeqeq": "error",
+    "func-call-spacing": "error",
     "indent": ["error", 4, { "SwitchCase": 1 }],
     "keyword-spacing": "error",
     "no-alert": "error",
-    "no-await-in-loop": "off",
-    "no-implicit-coercion": "off",
+    "no-console": ["error", { "allow": ["error"] }],
+    "no-implicit-coercion": "error",
     "no-loop-func": "error",
     "no-multi-spaces": "error",
     "no-multi-str": "error",
     "no-multiple-empty-lines": "error",
+    "no-param-reassign": "error",
+    "no-tabs": "error",
     "no-trailing-spaces": "error",
-    "no-useless-return": "off",
+    "no-undefined": "error",
+    "no-unneeded-ternary": "error",
+    "no-unused-expressions": "error",
     "no-var": "error",
     "prefer-arrow-callback": "error",
     "prefer-const": "error",
     "quotes": [2, "single", { "avoidEscape": true }],
     "require-await": "error",
-    "semi": "error",
-    "space-in-parens": "off",
-    "@typescript-eslint/no-misused-promises": ["error", { "checksVoidReturn": false }],
-    "@typescript-eslint/explicit-function-return-type": "warn",
-    "func-call-spacing": "error",
-    "no-param-reassign": "error",
-    "no-tabs": "error",
-    "no-undefined": "error",
-    "no-unneeded-ternary": "error",
-    "no-unused-expressions": "error"
+    "semi": "error"
   }
 }
