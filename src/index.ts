@@ -359,21 +359,14 @@ void (async function(): Promise<void> {
         newChatEventOccurred(eventToPass);
     });
 
-    const observer = new MutationObserver(mutations => {
-        mutations.forEach(mutation => {
-            const firePopupAppeared = ([...mutation.addedNodes] as Element[])
-                .some(element => element?.classList?.contains('fire-popup'));
-            if (!firePopupAppeared) return;
+    window.addEventListener('fire-popup-open', () => {
+        void addHtmlToFirePopup();
 
-            void addHtmlToFirePopup();
+        const reportedPost = document.querySelector('.fire-reported-post');
+        // add tooltips when keywords are clicked
+        reportedPost?.addEventListener('mouseup', event => {
+            checkForActionableKeywords(event as MouseEvent);
         });
-    });
-
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true,
-        attributes: false,
-        characterData: false
     });
 
     GM_addStyle(`
