@@ -361,12 +361,6 @@ void (async function(): Promise<void> {
 
     window.addEventListener('fire-popup-open', () => {
         void addHtmlToFirePopup();
-
-        const reportedPost = document.querySelector('.fire-reported-post');
-        // add tooltips when keywords are clicked
-        reportedPost?.addEventListener('mouseup', event => {
-            checkForActionableKeywords(event as MouseEvent);
-        });
     });
 
     GM_addStyle(`
