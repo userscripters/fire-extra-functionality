@@ -16,9 +16,6 @@
 // @supportURL  https://github.com/userscripters/fire-extra-functionality/issues
 // ==/UserScript==
 /* globals fire, toastr, CHAT */
-// NOTE: after installing this script, you need to modify FIRE. Add this line:
-//     window.dispatchEvent(new CustomEvent('fire-popup-appeared'));
-// before L1253 - hideReportImages(). This will fire an event when the FIRE popup opens which this userscript listens to.
 // The script only runs on Charcoal HQ (11540) for now.
 /******/ (() => { // webpackBootstrap
 /******/ 	"use strict";
@@ -167,7 +164,7 @@ void (async function () {
         });
         chat.newChatEventOccurred(eventToPass);
     });
-    window.addEventListener('fire-popup-appeared', addHtmlToFirePopup);
+    window.addEventListener('fire-popup-open', addHtmlToFirePopup);
     GM_addStyle(`
 .fire-extra-domains-list {
   padding: 5px !important;
