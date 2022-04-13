@@ -122,7 +122,7 @@ async function addHtmlToFirePopup() {
             return;
         }
         const githubPrOpenItem = domain_stats_js_1.Domains.githubPullRequests.find(item => item.regex.test(domainName));
-        const escapedDomain = domainName.replace(/\./g, '\\.');
+        const escapedDomain = domainName.replace(/blogspot\..*$/g, 'blogspot').replace(/\./g, '\\.');
         const watchBlacklistButtons = '<a class="fire-extra-watch">!!/watch</a>&nbsp;&nbsp;<a class="fire-extra-blacklist">!!/blacklist</a>&nbsp;&nbsp;';
         const actionsAreaHtml = githubPrOpenItem ? github.getPendingPrHtml(githubPrOpenItem) : watchBlacklistButtons;
         const msSearchUrl = exports.indexHelpers.getMetasmokeSearchUrl(escapedDomain);
