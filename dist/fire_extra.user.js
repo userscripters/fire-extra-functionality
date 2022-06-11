@@ -49,7 +49,7 @@ function updateDomainInformation(domainName) {
         return;
     const isWatched = exports.indexHelpers.isCaught(domain_stats_js_1.Domains.watchedWebsitesRegexes, domainName);
     const isBlacklisted = exports.indexHelpers.isCaught(domain_stats_js_1.Domains.blacklistedWebsitesRegexes, domainName);
-    const escapedDomain = domainName.replace(/\./, '\\.');
+    const escapedDomain = domainName.replace(/blogspot\..*$/g, 'blogspot').replace(/\./g, '\\.');
     const watch = {
         human: 'watched: ' + (isWatched ? 'yes' : 'no'),
         tooltip: isWatched || isBlacklisted ? 'domain already watched' : `!!/watch- ${escapedDomain}`,
