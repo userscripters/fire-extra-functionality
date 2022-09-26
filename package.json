@@ -22,7 +22,7 @@
     "@types/chai": "^4.3.3",
     "@types/jsdom": "^20.0.0",
     "@types/mocha": "^9.1.1",
-    "@types/node": "^18.7.20",
+    "@types/node": "^18.7.21",
     "@types/tampermonkey": "^4.0.5",
     "@typescript-eslint/eslint-plugin": "^5.38.0",
     "@typescript-eslint/parser": "^5.38.0",
