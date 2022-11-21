@@ -29,7 +29,7 @@
     "chai": "^4.3.7",
     "cross-env": "^7.0.3",
     "eslint": "^8.28.0",
-    "jsdom": "^20.0.2",
+    "jsdom": "^20.0.3",
     "mocha": "^10.1.0",
     "node-fetch": "^3.3.0",
     "resolve-typescript-plugin": "^2.0.0",
