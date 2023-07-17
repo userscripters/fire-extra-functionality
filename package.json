@@ -28,7 +28,7 @@
     "@typescript-eslint/parser": "^5.59.7",
     "chai": "^4.3.7",
     "cross-env": "^7.0.3",
-    "eslint": "^8.41.0",
+    "eslint": "^8.45.0",
     "jsdom": "^22.1.0",
     "mocha": "^10.2.0",
     "node-fetch": "^3.3.1",
