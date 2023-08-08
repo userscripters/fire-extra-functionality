@@ -89,7 +89,7 @@ export function getGraphQLInformation(idsArray: number[]): Promise<GraphQLRespon
 }
 
 function getPostCounts(parsedHtml: Document): number[] {
-    const tabsSelector = '.nav-tabs li:not([role="presentation"]';
+    const tabsSelector = '.nav-tabs li:not([role="presentation"])';
 
     return [...parsedHtml.querySelectorAll<HTMLAnchorElement>(tabsSelector)]
         .map(element => /\d+/.exec(element?.textContent?.trim() || '')?.[0])
