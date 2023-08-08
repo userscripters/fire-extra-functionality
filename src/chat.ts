@@ -44,7 +44,7 @@ async function sendActionMessageToChat(element: Element): Promise<void> {
     const newMessageUrl = `/chats/${charcoalRoomId}/messages/new`;
     const chatNewMessageCall = await (fetch || window.fetch)(newMessageUrl, {
         method: 'POST',
-        body: params as URLSearchParams
+        body: params
     });
 
     if (chatNewMessageCall.status !== 200) {
