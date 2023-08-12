@@ -65,7 +65,7 @@ export function getGraphQLInformation(idsArray: number[]): Promise<GraphQLRespon
     return new Promise((resolve, reject) => {
         GM_xmlhttpRequest({
             method: 'POST',
-            url: 'https://metasmoke.erwaysoftware.com/api/graphql',
+            url: `https://metasmoke.erwaysoftware.com/api/graphql?key=${metasmokeApiKey}`,
             data: JSON.stringify(payload),
             headers: {
                 'Content-Type': 'application/json'
