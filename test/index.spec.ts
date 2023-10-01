@@ -42,12 +42,12 @@ describe('index helpers', () => {
         const isWatched = (keyword: string): boolean => helpers.isCaught(watched, keyword);
         const isBlacklisted = (keyword: string): boolean => helpers.isCaught(blacklisted, keyword);
 
-        const validWatches = ['essayssos.com', 'trimfire', '3vcWir3'];
-        const invalidWatches = ['non-existent-keyword, google.com'];
+        const validWatches = ['essayssos.com', 'trimfire', 'erozon'];
+        const invalidWatches = ['non-existent-keyword', 'google.com'];
         validWatches.forEach(keyword => expect(isWatched(keyword)).to.be.true);
         invalidWatches.forEach(keyword => expect(isWatched(keyword)).to.be.false);
 
-        const validBlacklists = ['powerigfaustralia', 'ewebtonic.in', 'beautyskin', 'd680adc632091138ed9fd09659e15dc9'];
+        const validBlacklists = ['powerigfaustralia', 'ewebtonic.in', 'HwwtVoRs', 'd680adc632091138ed9fd09659e15dc9'];
         const invalidBlacklists = invalidWatches;
 
         validBlacklists.forEach(keyword => expect(isBlacklisted(keyword)).to.be.true);
