@@ -280,10 +280,6 @@ void (async function () {
     margin-right: 7px;
 }
 
-.fire-popup {
-    width: 700px !important;
-}
-
 .fire-extra-none {
     display: none;
 }
