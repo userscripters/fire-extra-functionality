@@ -84,7 +84,7 @@ exports.helpers = {
         const watchValue = domain
             ? exports.helpers.getRegexForPathShortener(term, domain)
             : term
-                .replace(/blogspot\.\w+$/, 'blogspot')
+                .replace(/blogspot\.\w+(\.\w+)?$/, 'blogspot')
                 .replace(/\./g, '\\.');
         return done
             ? alreadyDone
