@@ -4,8 +4,21 @@
 // @author       double-beep
 // @contributor  Xnero
 // @description  Watch, blacklist and see domain stats directly from the FIRE popup!
-// @match        https://chat.stackexchange.com/rooms/11540/charcoal-hq*
-// @match        https://chat.stackexchange.com/transcript/11540*
+// @match       *://chat.stackexchange.com/transcript/*
+// @match       *://chat.meta.stackexchange.com/transcript/*
+// @match       *://chat.stackoverflow.com/transcript/*
+// @match       *://chat.stackexchange.com/users/120914/*
+// @match       *://chat.stackexchange.com/users/120914?*
+// @match       *://chat.stackoverflow.com/users/3735529/*
+// @match       *://chat.stackoverflow.com/users/3735529?*
+// @match       *://chat.meta.stackexchange.com/users/266345/*
+// @match       *://chat.meta.stackexchange.com/users/266345?*
+// @match       *://chat.stackexchange.com/users/478536/*
+// @match       *://chat.stackexchange.com/users/478536?*
+// @match       *://chat.stackoverflow.com/users/14262788/*
+// @match       *://chat.stackoverflow.com/users/14262788?*
+// @match       *://chat.meta.stackexchange.com/users/848503/*
+// @match       *://chat.meta.stackexchange.com/users/848503?*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_addStyle
 // @run-at       document-start
