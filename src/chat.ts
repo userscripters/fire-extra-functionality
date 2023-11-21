@@ -1,7 +1,6 @@
 import { Toastr } from './index.js';
 import { getUpdatedPrInfo } from './github.js';
 import { Domains } from './domain_stats.js';
-import fetch from 'node-fetch';
 
 declare const toastr: Toastr;
 
@@ -42,7 +41,7 @@ async function sendActionMessageToChat(element: Element): Promise<void> {
     params.append('fkey', userFkey);
 
     const newMessageUrl = `/chats/${charcoalRoomId}/messages/new`;
-    const chatNewMessageCall = await (fetch || window.fetch)(newMessageUrl, {
+    const chatNewMessageCall = await fetch(newMessageUrl, {
         method: 'POST',
         body: params
     });

@@ -1,6 +1,5 @@
 import { expect } from 'chai';
 import jsdom from 'jsdom';
-import fetch from 'node-fetch';
 import { newChatEventOccurred } from '../src/chat.js';
 import { Domains } from '../src/domain_stats.js';
 import { helpers } from '../src/index.js';

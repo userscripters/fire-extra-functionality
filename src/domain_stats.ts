@@ -10,7 +10,6 @@ import {
     parsePullRequestDataFromApi
 } from './github.js';
 import { Toastr } from './index.js';
-import fetch from 'node-fetch';
 
 declare const toastr: Toastr;
 interface MetasmokeDomainStats {
@@ -49,11 +48,11 @@ export class Domains {
         const [
             watchedWebsitesCall, blacklistedWebsitesCall, githubPrsCall, whitelistedDomainsCall, redirectorsCall
         ] = await Promise.all(([
-            (fetch || window.fetch)(githubUrls.watched),
-            (fetch || window.fetch)(githubUrls.blacklisted),
-            (fetch || window.fetch)(githubUrls.api),
-            (fetch || window.fetch)(githubUrls.whitelisted),
-            (fetch || window.fetch)(githubUrls.redirectors)
+            fetch(githubUrls.watched),
+            fetch(githubUrls.blacklisted),
+            fetch(githubUrls.api),
+            fetch(githubUrls.whitelisted),
+            fetch(githubUrls.redirectors)
         ]));
 
         const [watchedWebsites, blacklistedWebsites, githubPrs, whitelistedDomains, redirectors] = await Promise.all([

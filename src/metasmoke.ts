@@ -1,5 +1,3 @@
-import fetch from 'node-fetch';
-
 interface GraphQLPostFeedbackCount {
     is_tp: boolean;
     is_fp: boolean;
@@ -121,7 +119,7 @@ export async function getAllDomainsFromPost(metasmokePostId: number): Promise<Do
     const parameters = `?key=${metasmokeApiKey}&filter=${postDomainsApiFilter}&per_page=100`;
     const msApiUrl = metasmokeApiBase + method + parameters;
 
-    const apiCallResponse = await (fetch || window.fetch)(msApiUrl);
+    const apiCallResponse = await fetch(msApiUrl);
     const jsonResponse = await apiCallResponse.json() as DomainsForPostIdResponse;
 
     return jsonResponse.items;

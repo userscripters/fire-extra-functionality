@@ -3,7 +3,6 @@ import {
     getAllDomainsFromPost,
     getMsSearchResults
 } from '../src/metasmoke.js';
-import fetch from 'node-fetch';
 import jsdom from "jsdom";
 
 const { JSDOM } = jsdom;

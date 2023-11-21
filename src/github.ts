@@ -1,5 +1,3 @@
-import fetch from 'node-fetch';
-
 export interface GithubApiResponse {
     number: number;
     title: string;
@@ -88,7 +86,7 @@ export async function getUpdatedPrInfo(parsedContent: Document): Promise<GithubA
     const prChanged = /Closed pull request |Merge pull request|opened by SmokeDetector/;
     if (!prChanged.test(messageText)) return;
 
-    const githubPrsApiCall = await (fetch || window.fetch)(githubUrls.api);
+    const githubPrsApiCall = await fetch(githubUrls.api);
     const githubPrsFromApi = await githubPrsApiCall.json() as GithubApiResponse[];
 
     return parsePullRequestDataFromApi(githubPrsFromApi);
