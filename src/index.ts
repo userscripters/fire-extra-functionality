@@ -92,7 +92,7 @@ export const helpers = {
             ? helpers.getRegexForPathShortener(term, domain)
             : term
                 // https://metasmoke.erwaysoftware.com/domains/groups/17
-                .replace(/blogspot\.\w+$/, 'blogspot') // abc.blogspot.com => abc.blogspot
+                .replace(/blogspot\.\w+(\.\w+)?$/, 'blogspot') // abc.blogspot.com => abc.blogspot
                 .replace(/\./g, '\\.'); // escape dots
 
         return done
@@ -388,10 +388,6 @@ void (async function(): Promise<void> {
 .fire-extra-blacklist, .fire-extra-watch, .fire-extra-approve {
     cursor: pointer;
     margin-right: 7px;
-}
-
-.fire-popup {
-    width: 700px !important;
 }
 
 .fire-extra-none {

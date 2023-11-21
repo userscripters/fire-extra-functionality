@@ -27,8 +27,9 @@ module.exports = {
                      // @author       double-beep
                      // @contributor  Xnero
                      // @description  Watch, blacklist and see domain stats directly from the FIRE popup!
-                     // @match        https://chat.stackexchange.com/rooms/11540/charcoal-hq
-                     // @match        https://chat.stackexchange.com/transcript/11540*
+                     // @match        *://chat.stackexchange.com/rooms/11540/charcoal-hq*
+                     // @match        *://chat.stackexchange.com/transcript/11540*
+                     // @match        *://chat.stackexchange.com/transcript/message/*
                      // @grant        GM_xmlhttpRequest
                      // @grant        GM_addStyle
                      // @run-at       document-start

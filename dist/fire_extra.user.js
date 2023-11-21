@@ -1,11 +1,12 @@
 // ==UserScript==
 // @name         FIRE Additional Functionality
-// @version      1.3.4
+// @version      1.3.5
 // @author       double-beep
 // @contributor  Xnero
 // @description  Watch, blacklist and see domain stats directly from the FIRE popup!
-// @match        https://chat.stackexchange.com/rooms/11540/charcoal-hq
-// @match        https://chat.stackexchange.com/transcript/11540*
+// @match        *://chat.stackexchange.com/rooms/11540/charcoal-hq*
+// @match        *://chat.stackexchange.com/transcript/11540*
+// @match        *://chat.stackexchange.com/transcript/message/*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_addStyle
 // @run-at       document-start
@@ -68,7 +69,7 @@ exports.helpers = {
         const watchValue = domain
             ? exports.helpers.getRegexForPathShortener(term, domain)
             : term
-                .replace(/blogspot\.\w+$/, 'blogspot')
+                .replace(/blogspot\.\w+(\.\w+)?$/, 'blogspot')
                 .replace(/\./g, '\\.');
         return done
             ? alreadyDone
@@ -278,10 +279,6 @@ void (async function () {
 .fire-extra-blacklist, .fire-extra-watch, .fire-extra-approve {
     cursor: pointer;
     margin-right: 7px;
-}
-
-.fire-popup {
-    width: 700px !important;
 }
 
 .fire-extra-none {
