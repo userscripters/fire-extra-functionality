@@ -360,9 +360,11 @@
     const container = document.createElement("div");
     const watchButton = document.createElement("a");
     watchButton.classList.add("fire-extra-watch");
+    watchButton.style.display = "none";
     watchButton.innerHTML = "!!/watch";
     const blacklistButton = document.createElement("a");
     blacklistButton.classList.add("fire-extra-blacklist");
+    blacklistButton.style.display = "none";
     blacklistButton.innerHTML = "!!/blacklist";
     container.append(watchButton, blacklistButton);
     return container;
@@ -547,15 +549,12 @@
     const watch = {
       human: helpers.getActionDone("watched", isWatched),
       tooltip: helpers.getButtonsText("watch", term, isWatched || isBlacklisted, domainName),
-      suggested: qualifiesForWatch && !isWatched && !isBlacklisted,
-      // note the button should be disabled if the domain is blacklisted
-      class: `fire-extra-${isWatched || isBlacklisted ? "disabled" : "watch"}`
+      suggested: qualifiesForWatch && !isWatched && !isBlacklisted
     };
     const blacklist = {
       human: helpers.getActionDone("blacklisted", isBlacklisted),
       tooltip: helpers.getButtonsText("blacklist", term, isBlacklisted, domainName),
-      suggested: qualifiesForBlacklist && !isBlacklisted,
-      class: `fire-extra-${isBlacklisted ? "disabled" : "blacklist"}`
+      suggested: qualifiesForBlacklist && !isBlacklisted
     };
     const watchInfo = domainLi?.querySelector(".fire-extra-watch-info");
     const blacklistInfo = domainLi?.querySelector(".fire-extra-blacklist-info");
@@ -573,8 +572,12 @@
       watchButton.append(" ", getTick());
     if (blacklist.suggested)
       blacklistButton.append(" ", getTick());
-    watchButton.classList.add(watch.class);
-    blacklistButton.classList.add(blacklist.class);
+    if (!isBlacklisted) {
+      blacklistButton.style.display = "inline";
+      if (!isWatched) {
+        watchButton.style.display = "inline";
+      }
+    }
     watchButton.setAttribute("fire-tooltip", watch.tooltip);
     blacklistButton.setAttribute("fire-tooltip", blacklist.tooltip);
   }
