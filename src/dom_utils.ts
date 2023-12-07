@@ -37,10 +37,12 @@ export function getWatchBlacklistButtons(): HTMLDivElement {
 
     const watchButton = document.createElement('a');
     watchButton.classList.add('fire-extra-watch');
+    watchButton.style.display = 'none';
     watchButton.innerHTML = '!!/watch';
 
     const blacklistButton = document.createElement('a');
     blacklistButton.classList.add('fire-extra-blacklist');
+    blacklistButton.style.display = 'none';
     blacklistButton.innerHTML = '!!/blacklist';
 
     container.append(watchButton, blacklistButton);

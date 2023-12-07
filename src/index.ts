@@ -134,15 +134,12 @@ function updateEmojisInformation(term: string): void {
         human: helpers.getActionDone('watched', isWatched),
         tooltip: helpers.getButtonsText('watch', term, isWatched || isBlacklisted, domainName),
         suggested: qualifiesForWatch && !isWatched && !isBlacklisted,
-        // note the button should be disabled if the domain is blacklisted
-        class: `fire-extra-${isWatched || isBlacklisted ? 'disabled' : 'watch'}`
     };
 
     const blacklist = {
         human: helpers.getActionDone('blacklisted', isBlacklisted),
         tooltip: helpers.getButtonsText('blacklist', term, isBlacklisted, domainName),
         suggested: qualifiesForBlacklist && !isBlacklisted,
-        class: `fire-extra-${isBlacklisted ? 'disabled' : 'blacklist'}`
     };
 
     const watchInfo = domainLi?.querySelector('.fire-extra-watch-info');
@@ -158,8 +155,8 @@ function updateEmojisInformation(term: string): void {
     watchInfo.replaceChildren('👀: ', isWatched ? getTick() : getCross());
     blacklistInfo.replaceChildren('🚫: ', isBlacklisted ? getTick() : getCross());
 
-    const watchButton = domainLi?.querySelector('.fire-extra-watch');
-    const blacklistButton = domainLi?.querySelector('.fire-extra-blacklist');
+    const watchButton = domainLi?.querySelector<HTMLElement>('.fire-extra-watch');
+    const blacklistButton = domainLi?.querySelector<HTMLElement>('.fire-extra-blacklist');
 
     // the buttons do not exist if a PR is pending
     if (!watchButton || !blacklistButton) return;
@@ -168,9 +165,14 @@ function updateEmojisInformation(term: string): void {
     if (watch.suggested) watchButton.append(' ', getTick());
     if (blacklist.suggested) blacklistButton.append(' ', getTick());
 
-    // disable buttons if necessary
-    watchButton.classList.add(watch.class);
-    blacklistButton.classList.add(blacklist.class);
+    // show buttons if action has not been taken
+    if (!isBlacklisted){
+        blacklistButton.style.display = 'inline';
+
+        if (!isWatched){
+            watchButton.style.display = 'inline';
+        }
+    }
 
     // add the tooltips (either !!/<action> example\.com or domain already <action>)
     watchButton.setAttribute('fire-tooltip', watch.tooltip);
