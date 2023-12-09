@@ -1,6 +1,6 @@
-import { Toastr } from './index.js';
-import { getUpdatedPrInfo } from './github.js';
-import { Domains } from './domain_stats.js';
+import { Toastr } from './index';
+import { getUpdatedPrInfo } from './github';
+import { Domains } from './domain_stats';
 
 declare const toastr: Toastr;
 

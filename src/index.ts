@@ -1,13 +1,13 @@
-import { GithubApiInformation } from './github.js';
-import { getAllDomainsFromPost, getMsSearchResults } from './metasmoke.js';
-import { getSeSearchResults } from './stackexchange.js';
-import { Domains, DomainStats } from './domain_stats.js';
+import { GithubApiInformation } from './github';
+import { getAllDomainsFromPost, getMsSearchResults } from './metasmoke';
+import { getSeSearchResults } from './stackexchange';
+import { Domains, DomainStats } from './domain_stats';
 import {
     ChatObject,
     ChatParsedEvent,
     addActionListener,
     newChatEventOccurred
-} from './chat.js';
+} from './chat';
 import {
     getWatchBlacklistButtons,
     getResultsContainer,
@@ -19,7 +19,7 @@ import {
     updateSeCount,
     updateMsCounts,
     triggerDomainUpdate
-} from './dom_utils.js';
+} from './dom_utils';
 
 export interface Toastr {
     success(message: string): void;

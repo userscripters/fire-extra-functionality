@@ -3,7 +3,7 @@ import {
     getSeUrl,
     getSeResultCount,
     getShortenedResultCount
-} from '../src/stackexchange.js';
+} from '../src/stackexchange';
 import jsdom from "jsdom";
 
 const { JSDOM } = jsdom;

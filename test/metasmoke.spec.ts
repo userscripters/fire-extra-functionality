@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import {
     getAllDomainsFromPost,
     getMsSearchResults
-} from '../src/metasmoke.js';
+} from '../src/metasmoke';
 import jsdom from "jsdom";
 
 const { JSDOM } = jsdom;

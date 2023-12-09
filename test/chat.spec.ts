@@ -1,8 +1,8 @@
 import { expect } from 'chai';
 import jsdom from 'jsdom';
-import { newChatEventOccurred } from '../src/chat.js';
-import { Domains } from '../src/domain_stats.js';
-import { helpers } from '../src/index.js';
+import { newChatEventOccurred } from '../src/chat';
+import { Domains } from '../src/domain_stats';
+import { helpers } from '../src/index';
 const { JSDOM } = jsdom;
 
 type ChatMessageActions = 'watch' | 'unwatch' | 'blacklist' | 'unblacklist';

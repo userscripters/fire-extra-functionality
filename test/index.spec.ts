@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import { Domains } from '../src/domain_stats.js';
-import { helpers } from '../src/index.js';
+import { Domains } from '../src/domain_stats';
+import { helpers } from '../src/index';
 
 describe('index helpers', () => {
     before(async () => await Domains.fetchAllDomainInformation());

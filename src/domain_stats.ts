@@ -1,15 +1,15 @@
 import {
     GraphQLResponse,
     getGraphQLInformation,
-} from './metasmoke.js';
+} from './metasmoke';
 import {
     GithubApiInformation,
     GithubApiResponse,
     githubUrls,
     getRegexesFromTxtFile,
     parsePullRequestDataFromApi
-} from './github.js';
-import { Toastr } from './index.js';
+} from './github';
+import { Toastr } from './index';
 
 declare const toastr: Toastr;
 interface MetasmokeDomainStats {

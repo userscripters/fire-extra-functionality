@@ -1,7 +1,7 @@
-import { getSeUrl } from './stackexchange.js';
-import { helpers } from './index.js';
-import { GithubApiInformation, sdGithubRepo } from './github.js';
-import { Domains } from './domain_stats.js';
+import { getSeUrl } from './stackexchange';
+import { helpers } from './index';
+import { GithubApiInformation, sdGithubRepo } from './github';
+import { Domains } from './domain_stats';
 
 interface Feedbacks {
     count: number,

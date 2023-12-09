@@ -6,7 +6,7 @@
     "esbuild": "node build.js",
     "build": "npm run lint && npm run esbuild",
     "lint": "eslint src --fix --ext .ts",
-    "test": "cross-env TS_NODE_PROJECT=test/tsconfig.json node --loader ts-node/esm node_modules/mocha/lib/cli/cli test/**/*.spec.ts"
+    "test": "TS_NODE_PROJECT='./test/tsconfig.json' mocha test/**/*.spec.ts*"
   },
   "repository": {
     "type": "git",

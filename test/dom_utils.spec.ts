@@ -4,8 +4,8 @@ import {
     getResultsContainer,
     updateMsCounts,
     updateSeCount
-} from '../src/dom_utils.js';
-import { helpers } from '../src/index.js';
+} from '../src/dom_utils';
+import { helpers } from '../src/index';
 
 describe('DOM utils', () => {
     it('should get the results container', () => {

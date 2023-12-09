@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { Domains } from '../src/domain_stats.js';
+import { Domains } from '../src/domain_stats';
 
 describe('whitelisted domains and URL shorteners', () => {
     before(async () => await Domains.fetchAllDomainInformation());

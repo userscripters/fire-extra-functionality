@@ -1,12 +1,12 @@
 import { expect } from 'chai';
-import { helpers } from '../src/index.js';
-import { getPendingPrElement } from '../src/dom_utils.js';
+import { helpers } from '../src/index';
+import { getPendingPrElement } from '../src/dom_utils';
 import {
     GithubApiResponse,
     getRegexesFromTxtFile,
     getUpdatedPrInfo,
     parsePullRequestDataFromApi
-} from '../src/github.js';
+} from '../src/github';
 import jsdom from "jsdom";
 
 const { JSDOM } = jsdom;
