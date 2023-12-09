@@ -348,6 +348,8 @@ async function addHtmlToFirePopup(): Promise<void> {
 }
 
 void (async function(): Promise<void> {
+    if (!globalThis.window) return; // for tests
+
     await new Promise(resolve => setTimeout(resolve, 0));
     await Domains.fetchAllDomainInformation();
 

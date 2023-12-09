@@ -683,6 +683,8 @@
     dataWrapperElement.append(domainList);
   }
   void async function() {
+    if (!globalThis.window)
+      return;
     await new Promise((resolve) => setTimeout(resolve, 0));
     await Domains.fetchAllDomainInformation();
     CHAT.addEventHandlerHook((event) => {
