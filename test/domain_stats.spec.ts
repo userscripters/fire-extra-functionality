@@ -33,9 +33,15 @@ describe('whitelisted domains and URL shorteners', () => {
         });
 
         // shouldn't return true for just parts of URLs
-        expect(Domains.whitelistedDomains.includes('ocs.google.co')).to.be.false;
-        expect(Domains.whitelistedDomains.includes('uperuser.com')).to.be.false;
-        expect(Domains.whitelistedDomains.includes('ers.google.com')).to.be.false;
+        [
+            'ocs.google.co',
+            'uperuser.com',
+            'ers.google.com'
+        ].forEach(domain => {
+            const isWhitelisted = Domains.whitelistedDomains.includes(domain);
+
+            expect(isWhitelisted).to.be.false;
+        });
     });
 
     it('should correctly recognise URL shorteners', () => {
@@ -63,8 +69,14 @@ describe('whitelisted domains and URL shorteners', () => {
             expect(!isWhitelisted && isRedirector).to.be.true; // can't be both
         });
 
-        expect(Domains.whitelistedDomains.includes('inktr.ee')).to.be.false;
-        expect(Domains.whitelistedDomains.includes('sh.ir')).to.be.false;
-        expect(Domains.whitelistedDomains.includes('rl.co')).to.be.false;
+        [
+            'inktr.ee',
+            'sh.ir',
+            'rl.co'
+        ].forEach(domain => {
+            const isWhitelisted = Domains.whitelistedDomains.includes(domain);
+
+            expect(isWhitelisted).to.be.false;
+        });
     });
 });

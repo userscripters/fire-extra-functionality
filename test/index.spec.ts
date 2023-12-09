@@ -4,6 +4,7 @@ import { helpers } from '../src/index';
 
 describe('index helpers', () => {
     before(async () => await Domains.fetchAllDomainInformation());
+
     it('should find if a domain with specific stats qualifies for watch', () => {
         expect(helpers.qualifiesForWatch([1, 0, 0], '0')).to.be.true;
         expect(helpers.qualifiesForWatch([5, 0, 0], '10')).to.be.false;
@@ -17,8 +18,18 @@ describe('index helpers', () => {
     });
 
     it('should get the correct li id given a domain', () => {
-        expect(helpers.getDomainId('stackoverflow.com')).to.be.equal('fire-extra-stackoverflow-com');
-        expect(helpers.getDomainId('many.many.dots.here')).to.be.equal('fire-extra-many-many-dots-here');
+        const data = {
+            'stackoverflow.com': 'fire-extra-stackoverflow-com',
+            'many.many.dots.here': 'fire-extra-many-many-dots-here'
+        };
+
+        Object
+            .entries(data)
+            .forEach(([ domain, expected ]) => {
+                const domainId = helpers.getDomainId(domain);
+
+                expect(domainId).to.be.equal(expected);
+            });
     });
 
     it('should return valid and correct MS search URLs', () => {
@@ -28,8 +39,9 @@ describe('index helpers', () => {
             .forEach(domainName => {
                 const msSearchUrl = helpers.getMetasmokeSearchUrl(domainName);
                 const urlObject = new URL(msSearchUrl);
+                const body = urlObject.searchParams.get('body');
 
-                expect(urlObject.searchParams.get('body')).to.be.equal(`(?s:\\b${domainName}\\b)`);
+                expect(body).to.be.equal(`(?s:\\b${domainName}\\b)`);
             });
     });
 
@@ -57,6 +69,7 @@ describe('index helpers', () => {
     it('should correctly pluralise words', () => {
         expect(helpers.pluralise('hit', 1)).to.be.equal('hit');
         expect(helpers.pluralise('hit', 0)).to.be.equal('hits');
+        expect(helpers.pluralise('hit', 100)).to.be.equal('hits');
     });
 
     it('should correctly fetch accurate tooltip texts for the emojis', () => {
@@ -84,22 +97,27 @@ describe('index helpers', () => {
         const watchBlogspotCom = helpers.getButtonsText('watch', 'abc.blogspot.com', false);
         const watchBlogspotDe = helpers.getButtonsText('watch', 'abc.blogspot.de', false);
 
-        expect(watchBlogspotCom).to.be.equal(watchBlogspotDe).to.be.equal('!!/watch- abc\\.blogspot');
+        expect(watchBlogspotCom)
+            .to.be.equal(watchBlogspotDe)
+            .to.be.equal('!!/watch- abc\\.blogspot');
     });
 
     it('should correctly fetch the correct regex for paths of shorteners', () => {
-        Object.entries({
-            '3vcWir3': ['bit.ly', '(?-i:3vcWir3)(?#bit.ly)'],
-            'FNEuyd': ['goo.gl', '(?-i:FNEuyd)(?#goo.gl)'],
-            'KdxEAt91D7k': ['youtu.be', '(?-i:KdxEAt91D7k)(?#youtu.be)']
-        }).forEach(([path, info]) => {
+        Object.entries(
+            {
+                '3vcWir3': ['bit.ly', '(?-i:3vcWir3)(?#bit.ly)'],
+                'FNEuyd': ['goo.gl', '(?-i:FNEuyd)(?#goo.gl)'],
+                'KdxEAt91D7k': ['youtu.be', '(?-i:KdxEAt91D7k)(?#youtu.be)']
+            }
+        ).forEach(([path, info]) => {
             const [domain, expectedValue] = info;
-            const regexWithDomain = helpers.getRegexForPathShortener(path, domain);
-            const regexWithoutDomain = helpers.getRegexForPathShortener(path);
+            const withDomain = helpers.getRegexForPathShortener(path, domain);
+            const withoutDomain = helpers.getRegexForPathShortener(path);
+
             const expectedNoComment = expectedValue.replace(/\(\?#.*/, '');
 
-            expect(regexWithDomain).to.be.equal(expectedValue);
-            expect(regexWithoutDomain).to.be.equal(expectedNoComment);
+            expect(withDomain).to.be.equal(expectedValue);
+            expect(withoutDomain).to.be.equal(expectedNoComment);
         });
     });
 });

@@ -48,26 +48,26 @@ describe('DOM utils', () => {
 
             const msStatsEl = domainLi.querySelector('.fire-extra-ms-stats') as HTMLElement;
             const [tpCount, fpCount, naaCount] = counts;
-            const [
-                tpElement,
-                fpElement,
-                naaElement
-            ] = msStatsEl.children;
-            const getTooltip = (count: number, type: string): string => `${count} ${helpers.pluralise(type, count)}`;
+            const [tpEl, fpEl, naaEl] = msStatsEl.children;
+
+            const getTooltip = (
+                count: number,
+                type: string
+            ): string => `${count} ${helpers.pluralise(type, count)}`;
 
             expect(msStatsEl.textContent).to.be.equal(counts.join(', '));
 
-            expect(tpElement.classList.contains('fire-extra-tp')).to.be.true;
-            expect(tpElement.textContent).to.be.equal(tpCount.toString());
-            expect(tpElement.getAttribute('fire-tooltip')).to.equal(getTooltip(tpCount, 'TP'));
+            expect(tpEl.classList.contains('fire-extra-tp')).to.be.true;
+            expect(fpEl.classList.contains('fire-extra-fp')).to.be.true;
+            expect(naaEl.classList.contains('fire-extra-naa')).to.be.true;
 
-            expect(fpElement.classList.contains('fire-extra-fp')).to.be.true;
-            expect(fpElement.textContent).to.be.equal(fpCount.toString());
-            expect(fpElement.getAttribute('fire-tooltip')).to.equal(getTooltip(fpCount, 'FP'));
+            expect(tpEl.textContent).to.be.equal(tpCount.toString());
+            expect(fpEl.textContent).to.be.equal(fpCount.toString());
+            expect(naaEl.textContent).to.be.equal(naaCount.toString());
 
-            expect(naaElement.classList.contains('fire-extra-naa')).to.be.true;
-            expect(naaElement.textContent).to.be.equal(naaCount.toString());
-            expect(naaElement.getAttribute('fire-tooltip')).to.equal(getTooltip(naaCount, 'NAA'));
+            expect(tpEl.getAttribute('fire-tooltip')).to.equal(getTooltip(tpCount, 'TP'));
+            expect(fpEl.getAttribute('fire-tooltip')).to.equal(getTooltip(fpCount, 'FP'));
+            expect(naaEl.getAttribute('fire-tooltip')).to.equal(getTooltip(naaCount, 'NAA'));
         });
     });
 

@@ -29,7 +29,8 @@ global.DOMParser = new JSDOM().window.DOMParser;
 describe('metasmoke helpers', () => {
     it('should fetch a post\'s domains given its id in metasmoke', async () => {
         const postIds = [311240, 311227, 311248];
-        const domains = postIds.map(metasmokePostId => getAllDomainsFromPost(metasmokePostId));
+
+        const domains = postIds.map(id => getAllDomainsFromPost(id));
         const domainsArray = await Promise.all(domains);
 
         expect(domainsArray.length).to.equal(3);
@@ -48,6 +49,7 @@ describe('metasmoke helpers', () => {
 
         for (const [term, expectedCounts] of termEntries) {
             const actualCounts = await getMsSearchResults(term);
+
             expect(actualCounts).deep.equal(expectedCounts);
         }
     });

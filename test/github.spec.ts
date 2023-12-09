@@ -13,7 +13,7 @@ const { JSDOM } = jsdom;
 
 global.document = new JSDOM().window.document;
 
-const watchedKeywordsExample = String.raw
+const watchSample = String.raw
 `1494929269	tripleee	thewellnesscorner\.com
 1494929399	tripleee	optisolbusiness\.com
 1494997469	tripleee	careinfo\.in
@@ -22,7 +22,7 @@ const watchedKeywordsExample = String.raw
 1495002561	tripleee	erozon
 1495005325	tripleee	onlinesupplementworld\.com
 1495006487	tripleee	ahealthadvisory\.com`;
-const blacklistedKeywordsExample = String.raw
+const blacklistedSample = String.raw
 `resolit\.us
 techinpost\.com
 hackerscontent\.com
@@ -66,32 +66,40 @@ const sampleGithubApiResponse: GithubApiResponse[] = [
 
 describe('github helpers', () => {
     it('should correctly parse the content of sample keywords files', () => {
-        const watchedParsed = getRegexesFromTxtFile(watchedKeywordsExample, 2);
-        const blacklistedParsed = getRegexesFromTxtFile(blacklistedKeywordsExample, 0);
+        const watchedParsed = getRegexesFromTxtFile(watchSample, 2);
+        const blacklistedParsed = getRegexesFromTxtFile(blacklistedSample, 0);
         const allParsed = watchedParsed.concat(blacklistedParsed);
 
         // for watches we need to split and get the third column
-        const watchedNoBackslashes = watchedKeywordsExample.replace(/\\/mg, '').split('\n').map(line => line.split('\t')[2]);
-        const blacklistedNoBackslashes = blacklistedKeywordsExample.replace(/\\/mg, '').split('\n');
+        const watches = watchSample
+            .replace(/\\/mg, '')
+            .split('\n')
+            .map(line => line.split('\t')[2]);
+
+        const blacklists = blacklistedSample
+            .replace(/\\/mg, '')
+            .split('\n');
+
         expect(allParsed.every(item => item instanceof RegExp)); // make sure they're all regexes
+
         // the array should contain the right regexes
-        expect(watchedNoBackslashes.every(keyword => helpers.isCaught(watchedParsed, keyword))).to.be.true;
-        expect(blacklistedNoBackslashes.every(keyword => helpers.isCaught(blacklistedParsed, keyword))).to.be.true;
+        expect(watches.every(keyword => helpers.isCaught(watchedParsed, keyword))).to.be.true;
+        expect(blacklists.every(keyword => helpers.isCaught(blacklistedParsed, keyword))).to.be.true;
     });
 
     it('should correctly parse a sample GH API response', () => {
-        const parsedContent = parsePullRequestDataFromApi(sampleGithubApiResponse);
-        expect(parsedContent.length).to.equal(2);
+        const parsed = parsePullRequestDataFromApi(sampleGithubApiResponse);
+        expect(parsed.length).to.equal(2);
 
-        const [firstItem, secondItem] = parsedContent;
-        expect(firstItem.regex.test('goodhousekeeping.com')).to.be.true;
-        expect(secondItem.regex.test('some-domain.with.dots.com')).to.be.true;
+        const [first, second] = parsed;
+        expect(first.regex.test('goodhousekeeping.com')).to.be.true;
+        expect(second.regex.test('some-domain.with.dots.com')).to.be.true;
 
         const firstExpectedTooltip = 'Xnero wants to watch goodhousekeeping\\.com in PR#1';
         const secondExpectedTooltip = 'username wants to watch some-domain\\.with\\.dots\\.com in PR#4829';
 
-        const firstPrItem = getPendingPrElement(firstItem);
-        const secondPrItem = getPendingPrElement(secondItem);
+        const firstPrItem = getPendingPrElement(first);
+        const secondPrItem = getPendingPrElement(second);
 
         const firstPrLink = firstPrItem.firstElementChild as HTMLAnchorElement;
         expect(firstPrLink.href).to.be.equal('//github.com/Charcoal-SE/SmokeDetector/pull/1');
@@ -121,10 +129,12 @@ describe('github helpers', () => {
         validChatMessages.forEach(async message => {
             const parsedMessageHtml = new JSDOM(message).window.document;
             const functionReturnValue = await getUpdatedPrInfo(parsedMessageHtml);
+
             expect(functionReturnValue).not.to.be.undefined;
         });
 
         const irrelevantMessage = 'This is an unrelated message about a pull request';
-        expect(await getUpdatedPrInfo(new JSDOM(irrelevantMessage).window.document)).to.be.undefined;
+        const parsed = new JSDOM(irrelevantMessage).window.document;
+        expect(await getUpdatedPrInfo(parsed)).to.be.undefined;
     });
 });

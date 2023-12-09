@@ -12,8 +12,18 @@ global.DOMParser = new JSDOM().window.DOMParser;
 
 describe('stackexchange helpers', () => {
     it('should correctly get the correct Stack Exchange search URL', () => {
-        expect(getSeUrl('example.com')).to.be.equal('https://stackexchange.com/search?q=url%3Aexample.com');
-        expect(getSeUrl('KdxEAt91D7k')).to.be.equal('https://stackexchange.com/search?q=KdxEAt91D7k');
+        const data = {
+            'example.com': 'https://stackexchange.com/search?q=url%3Aexample.com',
+            'KdxEAt91D7k': 'https://stackexchange.com/search?q=KdxEAt91D7k'
+        };
+
+        Object
+            .entries(data)
+            .forEach(([ domain, expected ]) => {
+                const seUrl = getSeUrl(domain);
+
+                expect(seUrl).to.be.equal(expected);
+            });
     });
 
     it('should correctly get the correct shortened result count', () => {
@@ -29,7 +39,8 @@ describe('stackexchange helpers', () => {
         ] as [number, string][];
 
         valuesArray
-            .forEach(([inserted, expected]) => expect(getShortenedResultCount(inserted)).to.equal(expected));
+            .map(([ inserted, expected ]) => [ getShortenedResultCount(inserted), expected ])
+            .forEach(([ shortened, expected ]) => expect(shortened).to.equal(expected));
     });
 
     it('should correctly fetch the SE results given part of the page\'s HTML', () => {
@@ -38,8 +49,10 @@ describe('stackexchange helpers', () => {
                               4,542,120 <span class="results-label">results</span>
                           </h2>
                       </div>`;
-        const parsedHtml = new JSDOM(html).window.document;
 
-        expect(getSeResultCount(parsedHtml)).to.be.equal('4542120');
+        const parsed = new JSDOM(html).window.document;
+        const count = getSeResultCount(parsed);
+
+        expect(count).to.be.equal('4542120');
     });
 });
