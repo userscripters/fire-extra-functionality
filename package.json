@@ -29,7 +29,7 @@
     "@typescript-eslint/parser": "^6.13.2",
     "chai": "^4.3.10",
     "cross-env": "^7.0.3",
-    "esbuild": "^0.19.8",
+    "esbuild": "^0.19.9",
     "eslint": "^8.55.0",
     "jsdom": "^23.0.1",
     "mocha": "^10.2.0",
