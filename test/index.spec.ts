@@ -59,7 +59,7 @@ describe('index helpers', () => {
         validWatches.forEach(keyword => expect(isWatched(keyword)).to.be.true);
         invalidWatches.forEach(keyword => expect(isWatched(keyword)).to.be.false);
 
-        const validBlacklists = ['powerigfaustralia', 'ewebtonic.in', 'HwwtVoRs', 'd680adc632091138ed9fd09659e15dc9'];
+        const validBlacklists = ['powerigfaustralia', 'ewebtonic.in', 'healthcaresup', 'd680adc632091138ed9fd09659e15dc9'];
         const invalidBlacklists = invalidWatches;
 
         validBlacklists.forEach(keyword => expect(isBlacklisted(keyword)).to.be.true);
