@@ -20,13 +20,13 @@
   },
   "homepage": "https://github.com/userscripters/fire-extra-functionality#readme",
   "devDependencies": {
-    "@types/chai": "^4.3.12",
+    "@types/chai": "^4.3.14",
     "@types/jsdom": "^21.1.6",
     "@types/mocha": "^10.0.6",
-    "@types/node": "^20.11.28",
+    "@types/node": "^20.11.30",
     "@types/tampermonkey": "^5.0.2",
-    "@typescript-eslint/eslint-plugin": "^7.2.0",
-    "@typescript-eslint/parser": "^7.2.0",
+    "@typescript-eslint/eslint-plugin": "^7.3.1",
+    "@typescript-eslint/parser": "^7.3.1",
     "chai": "^5.1.0",
     "cross-env": "^7.0.3",
     "esbuild": "^0.20.2",
@@ -34,7 +34,7 @@
     "jsdom": "^24.0.0",
     "mocha": "^10.3.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.4.2"
+    "typescript": "^5.4.3"
   },
   "type": "module"
 }
