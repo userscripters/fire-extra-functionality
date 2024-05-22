@@ -149,16 +149,13 @@
   function makeRegexESCompatible(keyword) {
     const shortenerPathRegex = /\(\?-i:(\w+)\)\(\?#[a-zA-Z.]+\)/;
     const urlPath = keyword.match(shortenerPathRegex)?.[1];
-    if (!urlPath)
-      return [];
-    else
-      return [new RegExp(urlPath)];
+    if (!urlPath) return [];
+    else return [new RegExp(urlPath)];
   }
   function getRegexesFromTxtFile(fileContent, position) {
     return fileContent.split("\n").flatMap((line) => {
       const keyword = line.split("	")[position];
-      if (!keyword)
-        return [];
+      if (!keyword) return [];
       let regexToReturn;
       try {
         regexToReturn = new RegExp(keyword);
@@ -192,8 +189,7 @@
   async function getUpdatedPrInfo(parsedContent) {
     const messageText = parsedContent.body?.innerHTML || "";
     const prChanged = /Closed pull request |Merge pull request|opened by SmokeDetector/;
-    if (!prChanged.test(messageText))
-      return;
+    if (!prChanged.test(messageText)) return;
     const githubPrsApiCall = await fetch(githubUrls.api);
     const githubPrsFromApi = await githubPrsApiCall.json();
     return parsePullRequestDataFromApi(githubPrsFromApi);
@@ -209,8 +205,7 @@
     static whitelistedDomains;
     static redirectors;
     static async fetchAllDomainInformation() {
-      if (this.watchedWebsites && this.blacklistedWebsites && this.githubPullRequests && this.whitelistedDomains && this.redirectors)
-        return;
+      if (this.watchedWebsites && this.blacklistedWebsites && this.githubPullRequests && this.whitelistedDomains && this.redirectors) return;
       const [
         watchedWebsitesCall,
         blacklistedWebsitesCall,
@@ -238,14 +233,12 @@
       this.redirectors = redirectors.split("\n");
     }
     static async getTpFpNaaCountFromDomains(domainIds) {
-      if (!domainIds.length)
-        return {};
+      if (!domainIds.length) return {};
       const domainStats = {};
       try {
         const results = await getGraphQLInformation(domainIds);
         const parsedResults = JSON.parse(JSON.stringify(results));
-        if ("errors" in parsedResults)
-          return {};
+        if ("errors" in parsedResults) return {};
         parsedResults.data.spam_domains.forEach((spamDomain) => {
           const tpPosts = spamDomain.posts.filter((post) => post.is_tp).length;
           const fpPosts = spamDomain.posts.filter((post) => post.is_fp).length;
@@ -268,10 +261,8 @@
     const messageToSend = element.getAttribute("fire-tooltip");
     const fkeyEl = document.querySelector('input[name="fkey"]');
     const userFkey = fkeyEl?.value;
-    if (!userFkey)
-      throw new Error("Chat fkey not found");
-    else if (!messageToSend)
-      throw new Error("No message found");
+    if (!userFkey) throw new Error("Chat fkey not found");
+    else if (!messageToSend) throw new Error("No message found");
     const params = new FormData();
     params.append("text", messageToSend);
     params.append("fkey", userFkey);
@@ -284,12 +275,10 @@
       throw new Error(`Failed to send message to chat. Returned error is ${chatNewMessageCall.status}`);
     }
     const chatResponse = await chatNewMessageCall.json();
-    if (!chatResponse.id || !chatResponse.time)
-      throw new Error("Failed to send message to chat!");
+    if (!chatResponse.id || !chatResponse.time) throw new Error("Failed to send message to chat!");
   }
   function addActionListener(element) {
-    if (!element)
-      return;
+    if (!element) return;
     element.addEventListener("click", async () => {
       try {
         await sendActionMessageToChat(element);
@@ -304,8 +293,7 @@
     const messageText = parsedContent.body?.innerHTML || "";
     const autoReloadOf = /SmokeDetector: Auto (?:un)?(?:watch|blacklist) of/;
     const blacklistsReloaded = /Blacklists reloaded at/;
-    if (!autoReloadOf.exec(messageText) || !blacklistsReloaded.exec(messageText))
-      return;
+    if (!autoReloadOf.exec(messageText) || !blacklistsReloaded.exec(messageText)) return;
     try {
       const regexText = parsedContent.querySelectorAll("code")[1].innerHTML;
       const newRegex = new RegExp(regexText);
@@ -331,8 +319,7 @@
     }
   }
   function newChatEventOccurred({ event_type, user_id, content }) {
-    if (user_id !== smokedetectorId && user_id !== metasmokeId || event_type !== 1)
-      return;
+    if (user_id !== smokedetectorId && user_id !== metasmokeId || event_type !== 1) return;
     updateWatchesAndBlacklists(content);
     getUpdatedPrInfo(content).then((newGithubPrInfo) => Domains.githubPullRequests = newGithubPrInfo || []).catch((error) => console.error(error));
   }
@@ -460,19 +447,16 @@
     return container;
   }
   function updateSeCount(count, domainLi) {
-    if (!domainLi)
-      return;
+    if (!domainLi) return;
     const hitCountAnchor = domainLi.querySelector(".fire-extra-se-results a");
-    if (!hitCountAnchor)
-      return;
+    if (!hitCountAnchor) return;
     const tooltipText = `${count} ${helpers.pluralise("hit", Number(count))} on SE`;
     hitCountAnchor.innerHTML = `SE: ${count}`;
     hitCountAnchor.setAttribute("fire-tooltip", tooltipText);
   }
   function updateMsCounts(counts, domainLi) {
     const msStats = domainLi?.querySelector(".fire-extra-ms-stats");
-    if (!msStats)
-      return;
+    if (!msStats) return;
     msStats.replaceChildren(...getColouredSpans(counts));
   }
   async function triggerDomainUpdate(domainIdsValid) {
@@ -480,8 +464,7 @@
     return Object.entries(domainStats).flatMap(([domainName, feedbackCount]) => {
       const domainId = helpers.getDomainId(domainName);
       const domainLi = document.getElementById(domainId);
-      if (!domainLi)
-        return [];
+      if (!domainLi) return [];
       updateMsCounts(feedbackCount, domainLi);
       Domains.allDomainInformation[domainName].metasmoke = feedbackCount;
       return [domainName];
@@ -540,8 +523,7 @@
     const domainId = helpers.getDomainId(term);
     const domainLi = document.getElementById(domainId);
     const domainName = term.includes(".") ? "" : domainLi?.parentElement?.parentElement?.firstChild?.textContent;
-    if (!seResultCount || !metasmokeStats?.length)
-      return;
+    if (!seResultCount || !metasmokeStats?.length) return;
     const isWatched = helpers.isCaught(Domains.watchedWebsites, term);
     const isBlacklisted = helpers.isCaught(Domains.blacklistedWebsites, term);
     const qualifiesForWatch = helpers.qualifiesForWatch(metasmokeStats, seResultCount);
@@ -558,20 +540,16 @@
     };
     const watchInfo = domainLi?.querySelector(".fire-extra-watch-info");
     const blacklistInfo = domainLi?.querySelector(".fire-extra-blacklist-info");
-    if (!watchInfo || !blacklistInfo)
-      return;
+    if (!watchInfo || !blacklistInfo) return;
     watchInfo.setAttribute("fire-tooltip", watch.human);
     blacklistInfo.setAttribute("fire-tooltip", blacklist.human);
     watchInfo.replaceChildren("\u{1F440}: ", isWatched ? getTick() : getCross());
     blacklistInfo.replaceChildren("\u{1F6AB}: ", isBlacklisted ? getTick() : getCross());
     const watchButton = domainLi?.querySelector(".fire-extra-watch");
     const blacklistButton = domainLi?.querySelector(".fire-extra-blacklist");
-    if (!watchButton || !blacklistButton)
-      return;
-    if (watch.suggested)
-      watchButton.append(" ", getTick());
-    if (blacklist.suggested)
-      blacklistButton.append(" ", getTick());
+    if (!watchButton || !blacklistButton) return;
+    if (watch.suggested) watchButton.append(" ", getTick());
+    if (blacklist.suggested) blacklistButton.append(" ", getTick());
     if (!isBlacklisted) {
       blacklistButton.style.display = "inline";
       if (!isWatched) {
@@ -586,8 +564,7 @@
       Domains.allDomainInformation[term].stackexchange = hitCount;
       updateSeCount(hitCount, domainLi);
       const infoObject = Domains.allDomainInformation[term];
-      if (!infoObject.metasmoke || !infoObject.stackexchange)
-        return;
+      if (!infoObject.metasmoke || !infoObject.stackexchange) return;
       updateEmojisInformation(term);
     }).catch((error) => {
       toastr.error(error);
@@ -599,8 +576,7 @@
       Domains.allDomainInformation[term].metasmoke = results;
       updateMsCounts(results, domainLi);
       const infoObject = Domains.allDomainInformation[term];
-      if (!infoObject.metasmoke || !infoObject.stackexchange)
-        return;
+      if (!infoObject.metasmoke || !infoObject.stackexchange) return;
       updateEmojisInformation(term);
     }).catch((error) => {
       toastr.error(error);
@@ -663,8 +639,7 @@
     const nativeSeLink = [...new URL(fireMsButton?.href || "").searchParams][0][1];
     const metasmokePostId = fire.reportCache[nativeSeLink].id;
     const domains = await getAllDomainsFromPost(metasmokePostId);
-    if (!domains.length)
-      return;
+    if (!domains.length) return;
     const divider = document.createElement("hr");
     const dataWrapperElement = document.createElement("div");
     dataWrapperElement.classList.add("fire-extra-functionality");
@@ -683,8 +658,7 @@
     dataWrapperElement.append(domainList);
   }
   void async function() {
-    if (!globalThis.window)
-      return;
+    if (!globalThis.window) return;
     await new Promise((resolve) => setTimeout(resolve, 0));
     await Domains.fetchAllDomainInformation();
     CHAT.addEventHandlerHook((event) => {
