@@ -103,7 +103,10 @@ export const helpers = {
     // (?-i:) - case sensitive
     // (?#)   - the shortener domain
     getRegexForPathShortener: (path: string, domain?: string): string => {
-        const mainPart = `(?-i:${path})`;
+        // https://stackoverflow.com/a/3561711
+        // https://chat.stackexchange.com/transcript/message/65665204
+        const escaped = path.replace(/[/\-\\^$*+?.()|[\]{}]/g, '\\$&');
+        const mainPart = `(?-i:${escaped})`;
         const comment = `(?#${domain || ''})`;
 
         return `${mainPart}${domain ? comment : ''}`;

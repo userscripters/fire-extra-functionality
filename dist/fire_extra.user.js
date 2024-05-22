@@ -510,7 +510,8 @@
     // (?-i:) - case sensitive
     // (?#)   - the shortener domain
     getRegexForPathShortener: (path, domain) => {
-      const mainPart = `(?-i:${path})`;
+      const escaped = path.replace(/[/\-\\^$*+?.()|[\]{}]/g, "\\$&");
+      const mainPart = `(?-i:${escaped})`;
       const comment = `(?#${domain || ""})`;
       return `${mainPart}${domain ? comment : ""}`;
     }
