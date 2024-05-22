@@ -1,6 +1,6 @@
 {
   "name": "fire-extra-functionality",
-  "version": "1.3.5",
+  "version": "1.3.6",
   "description": "Adds some more features to the FIRE userscript",
   "scripts": {
     "esbuild": "node build.js",
