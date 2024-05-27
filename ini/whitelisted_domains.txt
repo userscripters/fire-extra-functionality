@@ -530,6 +530,7 @@ unit-conversion.info
 bethelp.byethost3.com
 ubuntu-mate.community
 data.stackexchange.com
+tampermonkey.net
 mp4upload.com
 cognimem.com
 balena.io
@@ -556,7 +557,6 @@ gsuite.google.com
 download.microsoft.com
 google-rank-checker.squabbel.com
 blog.uploadcare.com
-i.sstack.imgur.com
 azuremarketplace.microsoft.com
 fda.gov
 google.com.au
@@ -661,5 +661,9 @@ subprocess.run
 keycode.space
 uk.wikipedia.org
 russian.stackexchange.com
+sstatic.net
+emailregex.com
 gnu.org.ua
+wiki.vg
 pyautogui.press
+i.sstatic.net
