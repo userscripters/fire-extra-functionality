@@ -75,6 +75,7 @@ describe('chat helpers', function() {
         // nayvi was blacklisted, therefore it shouldn't be in the watchlist, but in the blacklist
         expect(isCaught(watched, 'nayvi')).to.be.false;
         expect(isCaught(blacklisted, 'nayvi')).to.be.true;
+        expect(isCaught(blacklisted, 'naYvi')).to.be.true;
 
         // a user id other than SD's one shouldn't change the watchlist or the blacklist
         const random = new JSDOM(getRandomMessage(chatMessage, 'watch', 'example\\.com')).window.document;

@@ -7,7 +7,7 @@ import {
     GithubApiResponse,
     githubUrls,
     getRegexesFromTxtFile,
-    parsePullRequestDataFromApi
+    parseApiResponse
 } from './github';
 import { Toastr } from './index';
 
@@ -65,7 +65,7 @@ export class Domains {
 
         this.watchedWebsites = getRegexesFromTxtFile(watchedWebsites, 2);
         this.blacklistedWebsites = getRegexesFromTxtFile(blacklistedWebsites, 0);
-        this.githubPullRequests = parsePullRequestDataFromApi(githubPrs);
+        this.githubPullRequests = parseApiResponse(githubPrs);
 
         this.whitelistedDomains = whitelistedDomains.split('\n');
         this.redirectors = redirectors.split('\n');

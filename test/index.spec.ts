@@ -48,13 +48,13 @@ describe('index helpers', () => {
     it('should figure out if a domain is caught or not', () => {
         const {
             watchedWebsites: watched,
-            blacklistedWebsites: blacklisted 
+            blacklistedWebsites: blacklisted
         } = Domains;
 
         const isWatched = (keyword: string): boolean => helpers.isCaught(watched, keyword);
         const isBlacklisted = (keyword: string): boolean => helpers.isCaught(blacklisted, keyword);
 
-        const validWatches = ['essayssos.com', 'trimfire', 'erozon'];
+        const validWatches = ['essayssos.com', 'trimfire', 'erozon', 'saleleads.net', 'SaleLeads.net'];
         const invalidWatches = ['non-existent-keyword', 'google.com'];
         validWatches.forEach(keyword => expect(isWatched(keyword)).to.be.true);
         invalidWatches.forEach(keyword => expect(isWatched(keyword)).to.be.false);

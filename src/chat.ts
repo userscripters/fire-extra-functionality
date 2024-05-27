@@ -80,7 +80,7 @@ function updateWatchesAndBlacklists(parsedContent: Document): void {
 
     try {
         const regexText = parsedContent.querySelectorAll('code')[1].innerHTML;
-        const newRegex = new RegExp(regexText);
+        const newRegex = new RegExp(regexText, 'i');
         const anchorInnerHtml = parsedContent.querySelectorAll('a')?.[1].innerHTML;
 
         const regexMatch = (regex: RegExp): boolean => regex.toString() !== newRegex.toString();

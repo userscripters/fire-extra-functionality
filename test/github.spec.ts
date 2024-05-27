@@ -5,7 +5,7 @@ import {
     GithubApiResponse,
     getRegexesFromTxtFile,
     getUpdatedPrInfo,
-    parsePullRequestDataFromApi
+    parseApiResponse
 } from '../src/github';
 import jsdom from "jsdom";
 
@@ -88,7 +88,7 @@ describe('github helpers', () => {
     });
 
     it('should correctly parse a sample GH API response', () => {
-        const parsed = parsePullRequestDataFromApi(sampleGithubApiResponse);
+        const parsed = parseApiResponse(sampleGithubApiResponse);
         expect(parsed.length).to.equal(2);
 
         const [first, second] = parsed;

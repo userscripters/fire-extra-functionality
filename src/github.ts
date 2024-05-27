@@ -40,7 +40,7 @@ export function getRegexesFromTxtFile(fileContent: string, position: number): Re
 
         let regexToReturn;
         try {
-            regexToReturn = new RegExp(keyword);
+            regexToReturn = new RegExp(keyword, 'i');
         } catch (error) {
             // regex is incompatible with the ES regex engine
             // for (?-i:abcdefg)(?#bit.ly) regexes
@@ -52,7 +52,7 @@ export function getRegexesFromTxtFile(fileContent: string, position: number): Re
     });
 }
 
-export function parsePullRequestDataFromApi(jsonData: GithubApiResponse[]): GithubApiInformation[] {
+export function parseApiResponse(jsonData: GithubApiResponse[]): GithubApiInformation[] {
     // only interested in open PRs by SD
     return jsonData
         .filter(item => item.user.id === sdGhId && item.state === 'open')
@@ -86,8 +86,8 @@ export async function getUpdatedPrInfo(parsedContent: Document): Promise<GithubA
     const prChanged = /Closed pull request |Merge pull request|opened by SmokeDetector/;
     if (!prChanged.test(messageText)) return;
 
-    const githubPrsApiCall = await fetch(githubUrls.api);
-    const githubPrsFromApi = await githubPrsApiCall.json() as GithubApiResponse[];
+    const call = await fetch(githubUrls.api);
+    const response = await call.json() as GithubApiResponse[];
 
-    return parsePullRequestDataFromApi(githubPrsFromApi);
+    return parseApiResponse(response);
 }
