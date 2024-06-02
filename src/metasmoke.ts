@@ -89,19 +89,31 @@ export function getGraphQLInformation(idsArray: number[]): Promise<GraphQLRespon
 function getPostCounts(parsedHtml: Document): number[] {
     const tabsSelector = '.nav-tabs li:not([role="presentation"])';
 
-    return [...parsedHtml.querySelectorAll<HTMLAnchorElement>(tabsSelector)]
+    const counts = [...parsedHtml.querySelectorAll<HTMLAnchorElement>(tabsSelector)]
         .map(element => /\d+/.exec(element?.textContent?.trim() || '')?.[0])
         .map(Number);
+
+    // Note: in case no result is found in MS, the element
+    //       matching tabsSelector does not exist, so we need to return [0, 0, 0]
+    // See: https://chat.stackexchange.com/transcript/message/65741998
+    return counts.length
+        ? counts
+        : [0, 0, 0];
 }
 
 export function getMsSearchResults(term: string): Promise<number[]> {
+    const encoded = encodeURIComponent(term);
+
     return new Promise((resolve, reject) => {
         GM_xmlhttpRequest({
             method: 'GET',
-            url: `https://metasmoke.erwaysoftware.com/search?utf8=✓&body=${term}`,
+            url: `https://metasmoke.erwaysoftware.com/search?utf8=✓&body=${encoded}`,
             onload: response => {
-                if (response.status === 200) {
-                    const parsedHtml = new DOMParser().parseFromString(response.responseText, 'text/html');
+                const { status, responseText } = response;
+
+                if (status === 200) {
+                    const domParser = new DOMParser();
+                    const parsedHtml = domParser.parseFromString(responseText, 'text/html');
 
                     resolve(getPostCounts(parsedHtml));
                 } else {
@@ -109,7 +121,7 @@ export function getMsSearchResults(term: string): Promise<number[]> {
                     console.error(response);
                 }
             },
-            onerror: errorResponse => reject(errorResponse.responseText)
+            onerror: ({ responseText }) => reject(responseText)
         });
     });
 }
