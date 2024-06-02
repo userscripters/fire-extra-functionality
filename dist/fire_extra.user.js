@@ -68,23 +68,27 @@
   }
   function getPostCounts(parsedHtml) {
     const tabsSelector = '.nav-tabs li:not([role="presentation"])';
-    return [...parsedHtml.querySelectorAll(tabsSelector)].map((element) => /\d+/.exec(element?.textContent?.trim() || "")?.[0]).map(Number);
+    const counts = [...parsedHtml.querySelectorAll(tabsSelector)].map((element) => /\d+/.exec(element?.textContent?.trim() || "")?.[0]).map(Number);
+    return counts.length ? counts : [0, 0, 0];
   }
   function getMsSearchResults(term) {
+    const encoded = encodeURIComponent(term);
     return new Promise((resolve, reject) => {
       GM_xmlhttpRequest({
         method: "GET",
-        url: `https://metasmoke.erwaysoftware.com/search?utf8=\u2713&body=${term}`,
+        url: `https://metasmoke.erwaysoftware.com/search?utf8=\u2713&body=${encoded}`,
         onload: (response) => {
-          if (response.status === 200) {
-            const parsedHtml = new DOMParser().parseFromString(response.responseText, "text/html");
+          const { status, responseText } = response;
+          if (status === 200) {
+            const domParser = new DOMParser();
+            const parsedHtml = domParser.parseFromString(responseText, "text/html");
             resolve(getPostCounts(parsedHtml));
           } else {
             reject(`Failed to get search results for ${term} on metasmoke search.`);
             console.error(response);
           }
         },
-        onerror: (errorResponse) => reject(errorResponse.responseText)
+        onerror: ({ responseText }) => reject(responseText)
       });
     });
   }
@@ -158,14 +162,14 @@
       if (!keyword) return [];
       let regexToReturn;
       try {
-        regexToReturn = new RegExp(keyword);
+        regexToReturn = new RegExp(keyword, "i");
       } catch (error) {
         return makeRegexESCompatible(keyword);
       }
       return [regexToReturn];
     });
   }
-  function parsePullRequestDataFromApi(jsonData) {
+  function parseApiResponse(jsonData) {
     return jsonData.filter((item) => item.user.id === sdGhId && item.state === "open").flatMap((item) => {
       const { number, title } = item;
       let regex;
@@ -190,9 +194,9 @@
     const messageText = parsedContent.body?.innerHTML || "";
     const prChanged = /Closed pull request |Merge pull request|opened by SmokeDetector/;
     if (!prChanged.test(messageText)) return;
-    const githubPrsApiCall = await fetch(githubUrls.api);
-    const githubPrsFromApi = await githubPrsApiCall.json();
-    return parsePullRequestDataFromApi(githubPrsFromApi);
+    const call = await fetch(githubUrls.api);
+    const response = await call.json();
+    return parseApiResponse(response);
   }
 
   // src/domain_stats.ts
@@ -228,7 +232,7 @@
       ]);
       this.watchedWebsites = getRegexesFromTxtFile(watchedWebsites, 2);
       this.blacklistedWebsites = getRegexesFromTxtFile(blacklistedWebsites, 0);
-      this.githubPullRequests = parsePullRequestDataFromApi(githubPrs);
+      this.githubPullRequests = parseApiResponse(githubPrs);
       this.whitelistedDomains = whitelistedDomains.split("\n");
       this.redirectors = redirectors.split("\n");
     }
@@ -296,7 +300,7 @@
     if (!autoReloadOf.exec(messageText) || !blacklistsReloaded.exec(messageText)) return;
     try {
       const regexText = parsedContent.querySelectorAll("code")[1].innerHTML;
-      const newRegex = new RegExp(regexText);
+      const newRegex = new RegExp(regexText, "i");
       const anchorInnerHtml = parsedContent.querySelectorAll("a")?.[1].innerHTML;
       const regexMatch = (regex) => regex.toString() !== newRegex.toString();
       const isType = (regex) => Boolean(regex.exec(anchorInnerHtml));
