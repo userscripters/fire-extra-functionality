@@ -1,7 +1,4 @@
-import {
-    GraphQLResponse,
-    getGraphQLInformation,
-} from './metasmoke';
+import { getGraphQLInformation } from './metasmoke';
 import {
     GithubApiInformation,
     GithubApiResponse,
@@ -46,7 +43,7 @@ export class Domains {
         // Those files are frequently updated, so they can't be in @resources
         // Thanks tripleee! https://github.com/Charcoal-SE/halflife/blob/ab0fa5fc2a048b9e17762ceb6e3472e4d9c65317/halflife.py#L77
         const [
-            watchedWebsitesCall, blacklistedWebsitesCall, githubPrsCall, whitelistedDomainsCall, redirectorsCall
+            watchedCall, blacklistedCall, prsCall, whitelistedCall, redirectorsCall
         ] = await Promise.all(([
             fetch(githubUrls.watched),
             fetch(githubUrls.blacklisted),
@@ -55,19 +52,19 @@ export class Domains {
             fetch(githubUrls.redirectors)
         ]));
 
-        const [watchedWebsites, blacklistedWebsites, githubPrs, whitelistedDomains, redirectors] = await Promise.all([
-            watchedWebsitesCall.text(),
-            blacklistedWebsitesCall.text(),
-            githubPrsCall.json() as Promise<GithubApiResponse[]>,
-            whitelistedDomainsCall.text(),
+        const [watched, blacklisted, prs, whitelisted, redirectors] = await Promise.all([
+            watchedCall.text(),
+            blacklistedCall.text(),
+            prsCall.json() as Promise<GithubApiResponse[]>,
+            whitelistedCall.text(),
             redirectorsCall.text()
         ]);
 
-        this.watchedWebsites = getRegexesFromTxtFile(watchedWebsites, 2);
-        this.blacklistedWebsites = getRegexesFromTxtFile(blacklistedWebsites, 0);
-        this.githubPullRequests = parseApiResponse(githubPrs);
+        this.watchedWebsites = getRegexesFromTxtFile(watched, 2);
+        this.blacklistedWebsites = getRegexesFromTxtFile(blacklisted, 0);
+        this.githubPullRequests = parseApiResponse(prs);
 
-        this.whitelistedDomains = whitelistedDomains.split('\n');
+        this.whitelistedDomains = whitelisted.split('\n');
         this.redirectors = redirectors.split('\n');
     }
 
@@ -85,17 +82,20 @@ export class Domains {
         */
         try {
             const results = await getGraphQLInformation(domainIds);
-            const parsedResults = JSON.parse(JSON.stringify(results)) as GraphQLResponse;
-            if ('errors' in parsedResults) return {};
+            if ('errors' in results) return {};
 
-            parsedResults.data.spam_domains.forEach(spamDomain => {
+            results.data.spam_domains.forEach(spamDomain => {
                 const tpPosts = spamDomain.posts.filter(post => post.is_tp).length;
                 const fpPosts = spamDomain.posts.filter(post => post.is_fp).length;
                 const naaPosts = spamDomain.posts.filter(post => post.is_naa).length;
+
                 domainStats[spamDomain.domain] = [tpPosts, fpPosts, naaPosts];
             });
         } catch (error) {
-            toastr.error(error as string);
+            if (error instanceof Error) {
+                toastr.error(error.message);
+            }
+
             console.error('Error while trying to fetch domain stats from GraphiQL.', error);
         }
         return domainStats;

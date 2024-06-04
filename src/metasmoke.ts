@@ -18,7 +18,7 @@ interface GraphQLErrorInformation {
     })[];
 }
 
-export type GraphQLResponse = {
+type GraphQLResponse = {
     data: {
         spam_domains: GraphQLSpamDomains[];
     }
@@ -53,37 +53,38 @@ function getDomainPostsQuery(idsArray: number[]): string {
     }`;
 }
 
-export function getGraphQLInformation(idsArray: number[]): Promise<GraphQLResponse> {
+export async function getGraphQLInformation(idsArray: number[]): Promise<GraphQLResponse> {
     const query = getDomainPostsQuery(idsArray);
     const payload = {
         'query': query,
         'variables': null
     };
 
-    return new Promise((resolve, reject) => {
-        GM_xmlhttpRequest({
-            method: 'POST',
-            url: `https://metasmoke.erwaysoftware.com/api/graphql?key=${metasmokeApiKey}`,
-            data: JSON.stringify(payload),
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            onload: response => {
-                if (response.status === 200) {
-                    const jsonResponse = JSON.parse(response.responseText) as GraphQLResponse;
-                    const hasErrors = 'errors' in jsonResponse; // oops! something went wrong
-
-                    return hasErrors ? reject(jsonResponse) : resolve(jsonResponse);
-                } else { // status is not 200 (success), probably unauthorised/not logged in?
-                    reject(`Failed to get information from GraphQL with error ${response.status}.`
-                         + 'Make sure you are logged in to Metasmoke before trying again.');
-
-                    console.error(response);
-                }
-            },
-            onerror: errorResponse => reject(errorResponse.responseText)
-        });
+    const url = `https://metasmoke.erwaysoftware.com/api/graphql?key=${metasmokeApiKey}`;
+    const call = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
     });
+
+    if (!call.ok) {
+        const text = await call.text();
+        console.error(text);
+
+        throw new Error(`Failed to fetch information from GraphQL with error ${call.status}.`);
+    }
+
+    const response = await call.json() as GraphQLResponse;
+
+    if ('errors' in response) { // something went wrong
+        console.error(response);
+
+        throw new Error('Failed to fetch information from GraphQL. See console for more details.');
+    }
+
+    return response;
 }
 
 function getPostCounts(parsedHtml: Document): number[] {

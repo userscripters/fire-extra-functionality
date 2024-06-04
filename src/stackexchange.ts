@@ -36,21 +36,21 @@ export function getSeSearchResults(term: string): Promise<string> {
         GM_xmlhttpRequest({
             method: 'GET',
             url: requestUrl,
-            onload: response => {
-                if (response.status !== 200) {
-                    const errorMessage = getSeSearchErrorMessage(response.status, response.statusText, term);
+            onload: ({ status, statusText, responseText }) => {
+                if (status !== 200) {
+                    const message = getSeSearchErrorMessage(status, statusText, term);
 
-                    return reject(errorMessage);
+                    return reject(message);
                 }
 
-                const parsedResponse = new DOMParser().parseFromString(response.responseText, 'text/html');
-                const resultCount = Number(getSeResultCount(parsedResponse));
-                const shortenedResultCount = getShortenedResultCount(resultCount);
+                const parsed = new DOMParser().parseFromString(responseText, 'text/html');
+                const count = Number(getSeResultCount(parsed));
+                const shortened = getShortenedResultCount(count);
 
-                resolve(shortenedResultCount);
+                resolve(shortened);
             },
-            onerror: errorResponse => reject(
-                getSeSearchErrorMessage(errorResponse.status, errorResponse.statusText, term)
+            onerror: ({ status, statusText }) => reject(
+                getSeSearchErrorMessage(status, statusText, term)
             )
         });
     });
