@@ -176,14 +176,17 @@ export function getPendingPrElement(githubPrOpenItem: GithubApiInformation): HTM
 }
 
 export function updateSeCount(count: string, domainLi: Element): void {
-    if (!domainLi) return; // in case the popup is closed before the request is finished
+    if (!domainLi || !count) return; // in case the popup is closed before the request is finished
 
     const hitCountAnchor = domainLi.querySelector('.fire-extra-se-results a');
     if (!hitCountAnchor) return;
 
+    /*
     const tooltipText = `${count} ${helpers.pluralise('hit', Number(count))} on SE`;
     hitCountAnchor.innerHTML = `SE: ${count}`;
     hitCountAnchor.setAttribute('fire-tooltip', tooltipText);
+    */
+    hitCountAnchor.innerHTML = 'SE search';
 }
 
 export function updateMsCounts(counts: number[], domainLi: Element): void {

@@ -1,6 +1,6 @@
 import { GithubApiInformation } from './github';
 import { getAllDomainsFromPost, getMsSearchResults } from './metasmoke';
-import { getSeSearchResults } from './stackexchange';
+// import { getSeSearchResults } from './stackexchange';
 import { Domains, DomainStats } from './domain_stats';
 import {
     ChatObject,
@@ -183,7 +183,9 @@ function updateEmojisInformation(term: string): void {
 }
 
 function updateStackSearchResultCount(term: string, domainLi: Element): void {
-    getSeSearchResults(term).then(hitCount => {
+    // temp disabled, because it logs users out
+    // getSeSearchResults(term)
+    new Promise<string>(resolve => resolve('0')).then(hitCount => {
         // update the info object
         Domains.allDomainInformation[term].stackexchange = hitCount;
         updateSeCount(hitCount, domainLi);
@@ -234,6 +236,7 @@ function addChatListeners(domainItem: Element, githubPr?: GithubApiInformation):
 
 function createHTMLForGivenList(domainName: string, domainItem: Element): void {
     const pullRequests = Domains.githubPullRequests;
+    // TODO handle redirectors
     const githubPrOpenItem = pullRequests.find(({ regex }) => regex.test(domainName));
 
     /* Create the HTML for the domain li */
