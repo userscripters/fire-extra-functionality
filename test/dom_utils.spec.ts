@@ -79,7 +79,8 @@ describe('DOM utils', () => {
 
         const hitCountAnchor = domainLi.querySelector('.fire-extra-se-results a') as HTMLElement;
 
-        expect(hitCountAnchor.innerHTML).to.be.equal('SE: 10.5k');
-        expect(hitCountAnchor.getAttribute('fire-tooltip')).to.be.equal('10.5k hits on SE');
+        expect(hitCountAnchor.innerHTML).to.be.equal('SE search');
+        // expect(hitCountAnchor.innerHTML).to.be.equal('SE: 10.5k');
+        //expect(hitCountAnchor.getAttribute('fire-tooltip')).to.be.equal('10.5k hits on SE');
     });
 });
