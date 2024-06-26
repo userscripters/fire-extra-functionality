@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         FIRE Additional Functionality
-// @version      1.3.7
+// @version      1.3.8
 // @author       double-beep
 // @contributor  Xnero
 // @description  Watch, blacklist and see domain stats directly from the FIRE popup!
@@ -38,33 +38,31 @@
         }
     }`;
   }
-  function getGraphQLInformation(idsArray) {
+  async function getGraphQLInformation(idsArray) {
     const query = getDomainPostsQuery(idsArray);
     const payload = {
       "query": query,
       "variables": null
     };
-    return new Promise((resolve, reject) => {
-      GM_xmlhttpRequest({
-        method: "POST",
-        url: `https://metasmoke.erwaysoftware.com/api/graphql?key=${metasmokeApiKey}`,
-        data: JSON.stringify(payload),
-        headers: {
-          "Content-Type": "application/json"
-        },
-        onload: (response) => {
-          if (response.status === 200) {
-            const jsonResponse = JSON.parse(response.responseText);
-            const hasErrors = "errors" in jsonResponse;
-            return hasErrors ? reject(jsonResponse) : resolve(jsonResponse);
-          } else {
-            reject(`Failed to get information from GraphQL with error ${response.status}.Make sure you are logged in to Metasmoke before trying again.`);
-            console.error(response);
-          }
-        },
-        onerror: (errorResponse) => reject(errorResponse.responseText)
-      });
+    const url = `https://metasmoke.erwaysoftware.com/api/graphql?key=${metasmokeApiKey}`;
+    const call = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
     });
+    if (!call.ok) {
+      const text = await call.text();
+      console.error(text);
+      throw new Error(`Failed to fetch information from GraphQL with error ${call.status}.`);
+    }
+    const response = await call.json();
+    if ("errors" in response) {
+      console.error(response);
+      throw new Error("Failed to fetch information from GraphQL. See console for more details.");
+    }
+    return response;
   }
   function getPostCounts(parsedHtml) {
     const tabsSelector = '.nav-tabs li:not([role="presentation"])';
@@ -99,45 +97,6 @@
     const apiCallResponse = await fetch(msApiUrl);
     const jsonResponse = await apiCallResponse.json();
     return jsonResponse.items;
-  }
-
-  // src/stackexchange.ts
-  function getSeUrl(searchTerm) {
-    const base = "https://stackexchange.com/search?q=";
-    const isUrl = searchTerm.includes(".");
-    return isUrl ? `${base}url%3A${searchTerm}` : `${base}${searchTerm}`;
-  }
-  function getShortenedResultCount(number) {
-    return number > 999 ? (number / 1e3).toFixed(1).replace(".0", "") + "k" : number.toString();
-  }
-  function getSeSearchErrorMessage(status, statusText, domain) {
-    return `Error ${status} while trying to fetch the SE search results for ${domain}: ${statusText}.`;
-  }
-  function getSeResultCount(pageHtml) {
-    return pageHtml.querySelector(".results-header h2")?.textContent?.trim().replace(/,/g, "").match(/\d+/)?.[0] || "0";
-  }
-  function getSeSearchResults(term) {
-    const encodedTerm = encodeURIComponent(term);
-    const requestUrl = getSeUrl(encodedTerm);
-    return new Promise((resolve, reject) => {
-      GM_xmlhttpRequest({
-        method: "GET",
-        url: requestUrl,
-        onload: (response) => {
-          if (response.status !== 200) {
-            const errorMessage = getSeSearchErrorMessage(response.status, response.statusText, term);
-            return reject(errorMessage);
-          }
-          const parsedResponse = new DOMParser().parseFromString(response.responseText, "text/html");
-          const resultCount = Number(getSeResultCount(parsedResponse));
-          const shortenedResultCount = getShortenedResultCount(resultCount);
-          resolve(shortenedResultCount);
-        },
-        onerror: (errorResponse) => reject(
-          getSeSearchErrorMessage(errorResponse.status, errorResponse.statusText, term)
-        )
-      });
-    });
   }
 
   // src/github.ts
@@ -211,10 +170,10 @@
     static async fetchAllDomainInformation() {
       if (this.watchedWebsites && this.blacklistedWebsites && this.githubPullRequests && this.whitelistedDomains && this.redirectors) return;
       const [
-        watchedWebsitesCall,
-        blacklistedWebsitesCall,
-        githubPrsCall,
-        whitelistedDomainsCall,
+        watchedCall,
+        blacklistedCall,
+        prsCall,
+        whitelistedCall,
         redirectorsCall
       ] = await Promise.all([
         fetch(githubUrls.watched),
@@ -223,17 +182,17 @@
         fetch(githubUrls.whitelisted),
         fetch(githubUrls.redirectors)
       ]);
-      const [watchedWebsites, blacklistedWebsites, githubPrs, whitelistedDomains, redirectors] = await Promise.all([
-        watchedWebsitesCall.text(),
-        blacklistedWebsitesCall.text(),
-        githubPrsCall.json(),
-        whitelistedDomainsCall.text(),
+      const [watched, blacklisted, prs, whitelisted, redirectors] = await Promise.all([
+        watchedCall.text(),
+        blacklistedCall.text(),
+        prsCall.json(),
+        whitelistedCall.text(),
         redirectorsCall.text()
       ]);
-      this.watchedWebsites = getRegexesFromTxtFile(watchedWebsites, 2);
-      this.blacklistedWebsites = getRegexesFromTxtFile(blacklistedWebsites, 0);
-      this.githubPullRequests = parseApiResponse(githubPrs);
-      this.whitelistedDomains = whitelistedDomains.split("\n");
+      this.watchedWebsites = getRegexesFromTxtFile(watched, 2);
+      this.blacklistedWebsites = getRegexesFromTxtFile(blacklisted, 0);
+      this.githubPullRequests = parseApiResponse(prs);
+      this.whitelistedDomains = whitelisted.split("\n");
       this.redirectors = redirectors.split("\n");
     }
     static async getTpFpNaaCountFromDomains(domainIds) {
@@ -241,16 +200,17 @@
       const domainStats = {};
       try {
         const results = await getGraphQLInformation(domainIds);
-        const parsedResults = JSON.parse(JSON.stringify(results));
-        if ("errors" in parsedResults) return {};
-        parsedResults.data.spam_domains.forEach((spamDomain) => {
+        if ("errors" in results) return {};
+        results.data.spam_domains.forEach((spamDomain) => {
           const tpPosts = spamDomain.posts.filter((post) => post.is_tp).length;
           const fpPosts = spamDomain.posts.filter((post) => post.is_fp).length;
           const naaPosts = spamDomain.posts.filter((post) => post.is_naa).length;
           domainStats[spamDomain.domain] = [tpPosts, fpPosts, naaPosts];
         });
       } catch (error) {
-        toastr.error(error);
+        if (error instanceof Error) {
+          toastr.error(error.message);
+        }
         console.error("Error while trying to fetch domain stats from GraphiQL.", error);
       }
       return domainStats;
@@ -326,6 +286,13 @@
     if (user_id !== smokedetectorId && user_id !== metasmokeId || event_type !== 1) return;
     updateWatchesAndBlacklists(content);
     getUpdatedPrInfo(content).then((newGithubPrInfo) => Domains.githubPullRequests = newGithubPrInfo || []).catch((error) => console.error(error));
+  }
+
+  // src/stackexchange.ts
+  function getSeUrl(searchTerm) {
+    const base = "https://stackexchange.com/search?q=";
+    const isUrl = searchTerm.includes(".");
+    return isUrl ? `${base}url%3A${searchTerm}` : `${base}${searchTerm}`;
   }
 
   // src/dom_utils.ts
@@ -451,12 +418,10 @@
     return container;
   }
   function updateSeCount(count, domainLi) {
-    if (!domainLi) return;
+    if (!domainLi || !count) return;
     const hitCountAnchor = domainLi.querySelector(".fire-extra-se-results a");
     if (!hitCountAnchor) return;
-    const tooltipText = `${count} ${helpers.pluralise("hit", Number(count))} on SE`;
-    hitCountAnchor.innerHTML = `SE: ${count}`;
-    hitCountAnchor.setAttribute("fire-tooltip", tooltipText);
+    hitCountAnchor.innerHTML = "SE search";
   }
   function updateMsCounts(counts, domainLi) {
     const msStats = domainLi?.querySelector(".fire-extra-ms-stats");
@@ -565,7 +530,7 @@
     blacklistButton.setAttribute("fire-tooltip", blacklist.tooltip);
   }
   function updateStackSearchResultCount(term, domainLi) {
-    getSeSearchResults(term).then((hitCount) => {
+    new Promise((resolve) => resolve("0")).then((hitCount) => {
       Domains.allDomainInformation[term].stackexchange = hitCount;
       updateSeCount(hitCount, domainLi);
       const infoObject = Domains.allDomainInformation[term];
