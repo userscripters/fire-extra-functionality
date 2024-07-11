@@ -3,7 +3,8 @@ import {
     getTag,
     getResultsContainer,
     updateMsCounts,
-    updateSeCount
+    updateSeCount,
+    getWatchBlacklistButtons
 } from '../src/dom_utils';
 import { helpers } from '../src/index';
 
@@ -25,6 +26,17 @@ describe('DOM utils', () => {
         expect(sePart.children[0].children[0].classList.contains('fire-extra-wait')).to.be.true;
 
         expect(resultsContainer).not.to.be.null;
+    });
+
+    it('should correctly return the container of !!/watch and !!/blacklist buttons', () => {
+        const container = getWatchBlacklistButtons();
+        const [watch, blacklist] = [...container.children];
+
+        expect(watch.innerHTML).to.equal('!!/watch');
+        expect(watch.className).to.equal('fire-extra-watch');
+
+        expect(blacklist.innerHTML).to.equal('!!/blacklist');
+        expect(blacklist.className).to.equal('fire-extra-blacklist');
     });
 
     it('should get a tag in metasmoke\'s style', () => {

@@ -36,7 +36,7 @@ function getButton(action: 'watch' | 'blacklist'): HTMLAnchorElement {
     const button = document.createElement('a');
     button.classList.add(`fire-extra-${action}`);
     button.style.display = 'none';
-    button.innerHTML = '!!/${action}';
+    button.innerHTML = `!!/${action}`;
 
     return button;
 }
