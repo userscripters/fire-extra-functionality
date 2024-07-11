@@ -34,7 +34,7 @@ describe('index helpers', () => {
 
     it('should return valid and correct MS search URLs', () => {
         // test the whitelisted domains and the redirectors which are all valid domains
-        [...Domains.whitelistedDomains, ...Domains.redirectors]
+        [...Domains.whitelisted, ...Domains.redirectors]
             .filter(domain => domain.includes('.')) // exclude exception
             .forEach(domainName => {
                 const msSearchUrl = helpers.getMetasmokeSearchUrl(domainName);
@@ -46,10 +46,7 @@ describe('index helpers', () => {
     });
 
     it('should figure out if a domain is caught or not', () => {
-        const {
-            watchedWebsites: watched,
-            blacklistedWebsites: blacklisted
-        } = Domains;
+        const { watched, blacklisted } = Domains;
 
         const isWatched = (keyword: string): boolean => helpers.isCaught(watched, keyword);
         const isBlacklisted = (keyword: string): boolean => helpers.isCaught(blacklisted, keyword);

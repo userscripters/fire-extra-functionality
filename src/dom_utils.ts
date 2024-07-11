@@ -4,8 +4,8 @@ import { GithubApiInformation, sdGithubRepo } from './github';
 import { Domains } from './domain_stats';
 
 interface Feedbacks {
-    count: number,
-    type: 'tp' | 'fp' | 'naa'
+    count: number;
+    type: 'tp' | 'fp' | 'naa';
 }
 
 export function getWaitGif(): HTMLImageElement {
@@ -32,20 +32,22 @@ export function getCross(): HTMLSpanElement {
     return redCross;
 }
 
+function getButton(action: 'watch' | 'blacklist'): HTMLAnchorElement {
+    const button = document.createElement('a');
+    button.classList.add(`fire-extra-${action}`);
+    button.style.display = 'none';
+    button.innerHTML = '!!/${action}';
+
+    return button;
+}
+
 export function getWatchBlacklistButtons(): HTMLDivElement {
     const container = document.createElement('div');
 
-    const watchButton = document.createElement('a');
-    watchButton.classList.add('fire-extra-watch');
-    watchButton.style.display = 'none';
-    watchButton.innerHTML = '!!/watch';
+    const watch = getButton('watch');
+    const blacklist = getButton('blacklist');
 
-    const blacklistButton = document.createElement('a');
-    blacklistButton.classList.add('fire-extra-blacklist');
-    blacklistButton.style.display = 'none';
-    blacklistButton.innerHTML = '!!/blacklist';
-
-    container.append(watchButton, blacklistButton);
+    container.append(watch, blacklist);
 
     return container;
 }
@@ -67,15 +69,15 @@ function getMsResultsElement(escapedDomain: string): HTMLDivElement {
 }
 
 function getSeResultsSpan(searchTerm: string): HTMLSpanElement {
-    const seResults = document.createElement('span');
-    seResults.classList.add('fire-extra-se-results');
+    const results = document.createElement('span');
+    results.classList.add('fire-extra-se-results');
 
-    const seResultsLink = document.createElement('a');
-    seResultsLink.href = getSeUrl(searchTerm);
-    seResultsLink.append(getWaitGif());
-    seResults.append(seResultsLink);
+    const link = document.createElement('a');
+    link.href = getSeUrl(searchTerm);
+    link.append(getWaitGif());
+    results.append(link);
 
-    return seResults;
+    return results;
 }
 
 export function getResultsContainer(term: string): HTMLElement {
@@ -84,10 +86,11 @@ export function getResultsContainer(term: string): HTMLElement {
     const container = document.createElement('div');
     container.style.marginRight = '7px';
 
-    const metasmokeResults = getMsResultsElement(escaped);
-    const stackResults = getSeResultsSpan(term);
+    const metasmoke = getMsResultsElement(escaped);
+    const stack = getSeResultsSpan(term);
 
-    container.append('(', metasmokeResults, ' | ', stackResults, ')');
+    // (MS: .., .., .. | SE: ..)
+    container.append('(', metasmoke, ' | ', stack, ')');
 
     return container;
 }
@@ -108,9 +111,9 @@ export function getInfoContainer(): HTMLDivElement {
     return container;
 }
 
-export function createTag(tagName: string): HTMLSpanElement {
+export function getTag(name: string): HTMLSpanElement {
     const tag = document.createElement('span');
-    tag.innerHTML = `#${tagName}`;
+    tag.innerHTML = `#${name}`;
     tag.classList.add('fire-extra-tag');
 
     return tag;
@@ -151,24 +154,23 @@ export function getColouredSpans([tpCount, fpCount, naaCount]: number[]): Array<
     return feedbacks.map(({ count, type }) => type ? getColouredSpan(count, type) : ', ');
 }
 
-const getGithubPrUrl = (prId: number): string => `//github.com/${sdGithubRepo}/pull/${prId}`;
-const getPrTooltip = ({ id, regex, author, type }: GithubApiInformation): string =>
-    `${author} wants to ${type} ${regex.source} in PR#${id}`;
 
-export function getPendingPrElement(githubPrOpenItem: GithubApiInformation): HTMLDivElement {
-    const prId = githubPrOpenItem.id;
+export function getPendingPrElement(pr: GithubApiInformation): HTMLDivElement {
+    const { author, type, regex, id } = pr;
 
     const container = document.createElement('div');
 
     const anchor = document.createElement('a');
-    anchor.href = getGithubPrUrl(prId);
-    anchor.innerHTML = `PR#${prId}`;
-    anchor.setAttribute('fire-tooltip', getPrTooltip(githubPrOpenItem));
+    anchor.href = `//github.com/${sdGithubRepo}/pull/${id}`;
+    anchor.innerHTML = `PR#${id}`;
+
+    const text = `${author} wants to ${type} ${regex.source} in PR#${id}`;
+    anchor.setAttribute('fire-tooltip', text);
 
     const approve = document.createElement('a');
     approve.classList.add('fire-extra-approve');
     approve.innerHTML = '!!/approve';
-    approve.setAttribute('fire-tooltip', `!!/approve ${prId}`);
+    approve.setAttribute('fire-tooltip', `!!/approve ${id}`);
 
     container.append(anchor, ' pending ', approve);
 
@@ -205,7 +207,9 @@ export async function triggerDomainUpdate(domainIdsValid: number[]): Promise<str
         .flatMap(([domainName, feedbackCount]) => {
             const domainId = helpers.getDomainId(domainName);
             const domainLi = document.getElementById(domainId);
-            if (!domainLi) return []; // in case the popup is closed before the process is complete
+
+            // in case the popup is closed before the process is complete
+            if (!domainLi) return [];
 
             updateMsCounts(feedbackCount, domainLi);
             Domains.allDomainInformation[domainName].metasmoke = feedbackCount;

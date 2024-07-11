@@ -25,23 +25,24 @@ export interface DomainStats {
 export class Domains {
     public static allDomainInformation: DomainStats = {}; // contains both the SE hit count and the MS feedbacks
 
-    public static watchedWebsites: RegExp[];
-    public static blacklistedWebsites: RegExp[];
-    public static githubPullRequests: GithubApiInformation[];
+    public static watched: RegExp[];
+    public static blacklisted: RegExp[];
+    public static pullRequests: GithubApiInformation[];
 
-    public static whitelistedDomains: string[];
+    public static whitelisted: string[];
     public static redirectors: string[];
 
     public static async fetchAllDomainInformation(): Promise<void> {
         // nothing to do; all information is successfully fetched
-        if (this.watchedWebsites
-         && this.blacklistedWebsites
-         && this.githubPullRequests
-         && this.whitelistedDomains
+        if (this.watched
+         && this.blacklisted
+         && this.pullRequests
+         && this.whitelisted
          && this.redirectors) return;
 
         // Those files are frequently updated, so they can't be in @resources
-        // Thanks tripleee! https://github.com/Charcoal-SE/halflife/blob/ab0fa5fc2a048b9e17762ceb6e3472e4d9c65317/halflife.py#L77
+        // Thanks tripleee!
+        // https://github.com/Charcoal-SE/halflife/blob/ab0fa5fc2a048b9e17762ceb6e3472e4d9c65317/halflife.py#L77
         const [
             watchedCall, blacklistedCall, prsCall, whitelistedCall, redirectorsCall
         ] = await Promise.all(([
@@ -60,11 +61,11 @@ export class Domains {
             redirectorsCall.text()
         ]);
 
-        this.watchedWebsites = getRegexesFromTxtFile(watched, 2);
-        this.blacklistedWebsites = getRegexesFromTxtFile(blacklisted, 0);
-        this.githubPullRequests = parseApiResponse(prs);
+        this.watched = getRegexesFromTxtFile(watched, 2);
+        this.blacklisted = getRegexesFromTxtFile(blacklisted, 0);
+        this.pullRequests = parseApiResponse(prs);
 
-        this.whitelistedDomains = whitelisted.split('\n');
+        this.whitelisted = whitelisted.split('\n');
         this.redirectors = redirectors.split('\n');
     }
 
@@ -84,12 +85,11 @@ export class Domains {
             const results = await getGraphQLInformation(domainIds);
             if ('errors' in results) return {};
 
-            results.data.spam_domains.forEach(spamDomain => {
-                const tpPosts = spamDomain.posts.filter(post => post.is_tp).length;
-                const fpPosts = spamDomain.posts.filter(post => post.is_fp).length;
-                const naaPosts = spamDomain.posts.filter(post => post.is_naa).length;
+            results.data.spam_domains.forEach(({ posts, domain }) => {
+                const stats = (['tp', 'fp', 'naa'] as const)
+                    .map(feedback => posts.filter(post => post[`is_${feedback}`]).length);
 
-                domainStats[spamDomain.domain] = [tpPosts, fpPosts, naaPosts];
+                domainStats[domain] = stats;
             });
         } catch (error) {
             if (error instanceof Error) {

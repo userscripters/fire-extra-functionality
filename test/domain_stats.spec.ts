@@ -26,7 +26,7 @@ describe('whitelisted domains and URL shorteners', () => {
             'workplace.stackexchange.com',
             'superuser.com',
         ].forEach(domain => {
-            const isWhitelisted = Domains.whitelistedDomains.includes(domain);
+            const isWhitelisted = Domains.whitelisted.includes(domain);
             const isRedirector = Domains.redirectors.includes(domain);
 
             expect(isWhitelisted && !isRedirector).to.be.true; // can't be both
@@ -38,7 +38,7 @@ describe('whitelisted domains and URL shorteners', () => {
             'uperuser.com',
             'ers.google.com'
         ].forEach(domain => {
-            const isWhitelisted = Domains.whitelistedDomains.includes(domain);
+            const isWhitelisted = Domains.whitelisted.includes(domain);
 
             expect(isWhitelisted).to.be.false;
         });
@@ -63,7 +63,7 @@ describe('whitelisted domains and URL shorteners', () => {
             'ow.ly',
             'pin.it',
         ].forEach(domain => {
-            const isWhitelisted = Domains.whitelistedDomains.includes(domain);
+            const isWhitelisted = Domains.whitelisted.includes(domain);
             const isRedirector = Domains.redirectors.includes(domain);
 
             expect(!isWhitelisted && isRedirector).to.be.true; // can't be both
@@ -74,7 +74,7 @@ describe('whitelisted domains and URL shorteners', () => {
             'sh.ir',
             'rl.co'
         ].forEach(domain => {
-            const isWhitelisted = Domains.whitelistedDomains.includes(domain);
+            const isWhitelisted = Domains.whitelisted.includes(domain);
 
             expect(isWhitelisted).to.be.false;
         });

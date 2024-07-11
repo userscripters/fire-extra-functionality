@@ -127,14 +127,15 @@ describe('github helpers', () => {
             'Blacklists reloaded at <a href="//domain.com">rev ... (SmokeDetector: Merge pull request #10...)</a>...'
         ];
         validChatMessages.forEach(async message => {
-            const parsedMessageHtml = new JSDOM(message).window.document;
-            const functionReturnValue = await getUpdatedPrInfo(parsedMessageHtml);
+            const content = new JSDOM(message).window.document;
+
+            const text = content.body?.innerHTML || '';
+            const functionReturnValue = await getUpdatedPrInfo(text);
 
             expect(functionReturnValue).not.to.be.undefined;
         });
 
         const irrelevantMessage = 'This is an unrelated message about a pull request';
-        const parsed = new JSDOM(irrelevantMessage).window.document;
-        expect(await getUpdatedPrInfo(parsed)).to.be.undefined;
+        expect(await getUpdatedPrInfo(irrelevantMessage)).to.be.undefined;
     });
 });

@@ -19,14 +19,20 @@ function getRandomMessage(
       .replace("linuxbuz\\.com", escapedDomain);
 }
 
+async function getMessage(id: number): Promise<string> {
+    const call = await fetch(`https://chat.stackexchange.com/message/${id}`);
+    const message = await call.text();
+
+    return message;
+}
+
 describe('chat helpers', function() {
     this.timeout(5e3); // before hook can timeout
 
     before(async () => await Domains.fetchAllDomainInformation());
 
     it('should update watches or blacklists based on the content of a chat message', async () => {
-        const call = await fetch('https://chat.stackexchange.com/message/58329215');
-        const chatMessage = await call.text();
+        const chatMessage = await getMessage(58329215);
 
         const messages = [
             'watch random-domain\\.com',
@@ -58,11 +64,7 @@ describe('chat helpers', function() {
                 );
             });
 
-        const {
-            watchedWebsites: watched,
-            blacklistedWebsites: blacklisted
-        } = Domains;
-
+        const { watched, blacklisted } = Domains;
         const { isCaught } = helpers;
 
         // random-domain.com was first watched, then unwatched and shouldn't be in the watchlist
@@ -84,5 +86,41 @@ describe('chat helpers', function() {
         newChatEventOccurred({ event_type: 12, user_id: 120914, content: random }); // not interested in that event type
 
         expect(isCaught(watched, 'example.com')).to.be.false;
+    });
+
+    it('should update keyword lists once a pull request is merged', async () => {
+        // fill Domains.pullRequests
+        Domains.pullRequests = [
+            {
+                id: 12080,
+                regex: /example\.com/,
+                author: 'double-beep',
+                type: 'watch',
+            },
+            {
+                id: 12085,
+                regex: /spam\.com/,
+                author: 'double-beep',
+                type: 'blacklist'
+            }
+        ];
+
+        const { isCaught } = helpers;
+
+        // Merge pull request #12085
+        expect(isCaught(Domains.blacklisted, 'spam.com')).to.be.false;
+        const merge = await getMessage(65938518);
+        newChatEventOccurred(
+            { event_type: 1, user_id: 120914, content: new JSDOM(merge).window.document }
+        );
+        expect(isCaught(Domains.blacklisted, 'spam.com')).to.be.true;
+
+        // Closed pull request #12080.
+        const close = await getMessage(65937100);
+        newChatEventOccurred(
+            { event_type: 1, user_id: 120914, content: new JSDOM(close).window.document }
+        );
+        expect(isCaught(Domains.watched, 'example.com')).to.be.false;
+        expect(isCaught(Domains.blacklisted, 'example.com')).to.be.false;
     });
 });

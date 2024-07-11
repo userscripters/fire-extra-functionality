@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import {
-    createTag,
+    getTag,
     getResultsContainer,
     updateMsCounts,
     updateSeCount
@@ -29,7 +29,7 @@ describe('DOM utils', () => {
 
     it('should get a tag in metasmoke\'s style', () => {
         ['shortener', 'ip', 'whitelisted', 'stuff-up'].forEach(tagName => {
-            const tag = createTag(tagName);
+            const tag = getTag(tagName);
 
             expect(tag.classList.contains('fire-extra-tag'));
             expect(tag.textContent).to.be.equal(`#${tagName}`);

@@ -81,10 +81,9 @@ export function parseApiResponse(jsonData: GithubApiResponse[]): GithubApiInform
         });
 }
 
-export async function getUpdatedPrInfo(parsedContent: Document): Promise<GithubApiInformation[] | undefined> {
-    const messageText = parsedContent.body?.innerHTML || '';
+export async function getUpdatedPrInfo(message: string): Promise<GithubApiInformation[] | undefined> {
     const prChanged = /Closed pull request |Merge pull request|opened by SmokeDetector/;
-    if (!prChanged.test(messageText)) return;
+    if (!prChanged.test(message)) return;
 
     const call = await fetch(githubUrls.api);
     const response = await call.json() as GithubApiResponse[];

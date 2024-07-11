@@ -5,7 +5,7 @@ import { Domains, DomainStats } from './domain_stats';
 import {
     ChatObject,
     ChatParsedEvent,
-    addActionListener,
+    addListener,
     newChatEventOccurred
 } from './chat';
 import {
@@ -14,7 +14,7 @@ import {
     getInfoContainer,
     getTick,
     getCross,
-    createTag,
+    getTag,
     getPendingPrElement,
     updateSeCount,
     updateMsCounts,
@@ -127,8 +127,8 @@ function updateEmojisInformation(term: string): void {
 
     if (!seResultCount || !metasmokeStats?.length) return;
 
-    const isWatched = helpers.isCaught(Domains.watchedWebsites, term);
-    const isBlacklisted = helpers.isCaught(Domains.blacklistedWebsites, term);
+    const isWatched = helpers.isCaught(Domains.watched, term);
+    const isBlacklisted = helpers.isCaught(Domains.blacklisted, term);
 
     const qualifiesForWatch = helpers.qualifiesForWatch(metasmokeStats, seResultCount);
     const qualifiesForBlacklist = helpers.qualifiesForBlacklist(metasmokeStats, seResultCount);
@@ -226,16 +226,16 @@ function addChatListeners(domainItem: Element, githubPr?: GithubApiInformation):
     const watchButton = domainItem.querySelector('.fire-extra-watch');
     const blacklistButton = domainItem.querySelector('.fire-extra-blacklist');
 
-    addActionListener(watchButton);
-    addActionListener(blacklistButton);
+    addListener(watchButton);
+    addListener(blacklistButton);
     if (githubPr) {
         const approveButton = domainItem.querySelector('.fire-extra-approve');
-        addActionListener(approveButton);
+        addListener(approveButton);
     }
 }
 
 function createHTMLForGivenList(domainName: string, domainItem: Element): void {
-    const pullRequests = Domains.githubPullRequests;
+    const pullRequests = Domains.pullRequests;
     // TODO handle redirectors
     const githubPrOpenItem = pullRequests.find(({ regex }) => regex.test(domainName));
 
@@ -298,11 +298,11 @@ function createDomainHtml(domainName: string, domainList: Element, child = false
 
     // If the domain is whitelisted or a redirector, don't search for TPs/FPs/NAAs.
     // They often have too many hits on SE/MS, and they make the script slower
-    if (Domains.whitelistedDomains.includes(domainName)) {
-        domainItem.append(createTag('whitelisted'));
+    if (Domains.whitelisted.includes(domainName)) {
+        domainItem.append(getTag('whitelisted'));
         return;
     } else if (Domains.redirectors.includes(domainName) && !child) {
-        domainItem.append(createTag('shortener'));
+        domainItem.append(getTag('shortener'));
         createDomainHtml(domainName, domainItem, true);
 
         return;
@@ -338,7 +338,7 @@ async function addHtmlToFirePopup(): Promise<void> {
 
     // exclude whitelisted domains, redirectors and domains that have a pending PR
     const domainIdsValid = domains.filter(
-        domainObject => !Domains.whitelistedDomains.includes(domainObject.domain)
+        domainObject => !Domains.whitelisted.includes(domainObject.domain)
                      && !Domains.redirectors.includes(domainObject.domain)
     ).map(item => item.id);
 
@@ -377,6 +377,10 @@ void (async function(): Promise<void> {
 .fire-extra-domains-list {
   padding: 5px !important;
   margin-left: 12px;
+}
+
+.fire-extra-domains-list li + li {
+    margin-top: 4px;
 }
 
 .fire-extra-domains-list div {

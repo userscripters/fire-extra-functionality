@@ -25,95 +25,131 @@ interface ChatResponse {
     time: number | null;
 }
 
-const charcoalRoomId = 11540, smokedetectorId = 120914, metasmokeId = 478536;
+const charcoalHq = 11540;
+const smokeyId = 120914;
+const metasmokeId = 478536;
 
-async function sendActionMessageToChat(element: Element): Promise<void> {
+async function sendMessage(element: Element): Promise<void> {
     // so that the text in the tooltip is consistent with what's being watched
-    const messageToSend = element.getAttribute('fire-tooltip');
+    const message = element.getAttribute('fire-tooltip');
 
     const fkeyEl = document.querySelector<HTMLInputElement>('input[name="fkey"]');
-    const userFkey = fkeyEl?.value;
-    if (!userFkey) throw new Error('Chat fkey not found'); // chat message cannot be sent
-    else if (!messageToSend) throw new Error('No message found');
+    const fkey = fkeyEl?.value;
+
+    if (!fkey) throw new Error('Chat fkey not found'); // chat message cannot be sent
+    else if (!message) throw new Error('No message found');
 
     const params = new FormData();
-    params.append('text', messageToSend);
-    params.append('fkey', userFkey);
+    params.append('text', message);
+    params.append('fkey', fkey);
 
-    const newMessageUrl = `/chats/${charcoalRoomId}/messages/new`;
-    const chatNewMessageCall = await fetch(newMessageUrl, {
+    const url = `/chats/${charcoalHq}/messages/new`;
+    const call = await fetch(url, {
         method: 'POST',
         body: params
     });
 
-    if (chatNewMessageCall.status !== 200) {
-        throw new Error(`Failed to send message to chat. Returned error is ${chatNewMessageCall.status}`);
+    if (call.status !== 200 || !call.ok) {
+        throw new Error(
+            `Failed to send message to chat. Returned error is ${call.status}`
+        );
     }
 
-    const chatResponse = await chatNewMessageCall.json() as ChatResponse;
+    const response = await call.json() as ChatResponse;
 
     // if .id or .time are null, then something went wrong
-    if (!chatResponse.id || !chatResponse.time) throw new Error('Failed to send message to chat!');
+    if (!response.id || !response.time) {
+        throw new Error('Failed to send message to chat!');
+    }
 }
 
-export function addActionListener(element: Element | null,): void {
+export function addListener(element: Element | null): void {
     if (!element) return;
 
     element.addEventListener('click', async () => {
         try {
-            await sendActionMessageToChat(element);
+            await sendMessage(element);
+
             toastr.success('Successfully sent message to chat.');
         } catch (error) {
             toastr.error(error as string);
+
             console.error('Error while sending message to chat.', error);
         }
     });
 }
 
-function updateWatchesAndBlacklists(parsedContent: Document): void {
-    const messageText = parsedContent.body?.innerHTML || '';
-    const autoReloadOf = /SmokeDetector: Auto (?:un)?(?:watch|blacklist) of/;
-    const blacklistsReloaded = /Blacklists reloaded at/;
-
-    // make sure the (un)watch/blacklist happened recently
-    if (!autoReloadOf.exec(messageText) || !blacklistsReloaded.exec(messageText)) return;
-
+function updateKeywordLists(
+    regex: string,
+    action: 'watch' | 'unwatch' | 'blacklist' | 'unblacklist'
+): void {
     try {
-        const regexText = parsedContent.querySelectorAll('code')[1].innerHTML;
-        const newRegex = new RegExp(regexText, 'i');
-        const anchorInnerHtml = parsedContent.querySelectorAll('a')?.[1].innerHTML;
+        const newRegex = new RegExp(regex, 'i');
 
-        const regexMatch = (regex: RegExp): boolean => regex.toString() !== newRegex.toString();
-        const isType = (regex: RegExp): boolean => Boolean(regex.exec(anchorInnerHtml));
+        const compare = (regex: RegExp): boolean => regex.source !== newRegex.source;
 
-        const isWatch = isType(/Auto\swatch\sof\s/);
-        const isBlacklist = isType(/Auto\sblacklist\sof\s/);
-        const isUnwatch = isType(/Auto\sunwatch\sof\s/);
-        const isUnblacklist = isType(/Auto\sunblacklist\sof/);
+        switch (action) {
+            case 'watch':
+                Domains.watched.push(newRegex);
 
-        if (isWatch) {
-            Domains.watchedWebsites.push(newRegex);
-        } else if (isBlacklist) {
-            // if it is a blacklist, also remove the item from the watchlist
-            Domains.watchedWebsites = Domains.watchedWebsites.filter(regexMatch);
-            Domains.blacklistedWebsites.push(newRegex);
-        } else if (isUnwatch) {
-            Domains.watchedWebsites = Domains.watchedWebsites.filter(regexMatch);
-        } else if (isUnblacklist) {
-            Domains.blacklistedWebsites = Domains.blacklistedWebsites.filter(regexMatch);
+                break;
+            case 'blacklist':
+                // if it is a blacklist, also remove the item from the watchlist
+                Domains.watched = Domains.watched.filter(compare);
+                Domains.blacklisted.push(newRegex);
+
+                break;
+            case 'unwatch':
+                Domains.watched = Domains.watched.filter(compare);
+
+                break;
+            case 'unblacklist':
+                Domains.blacklisted = Domains.blacklisted.filter(compare);
+                break;
+            default:
         }
     } catch (error) {
         return;
     }
 }
 
-export function newChatEventOccurred({ event_type, user_id, content }: ChatParsedEvent): void {
-    if ((user_id !== smokedetectorId && user_id !== metasmokeId) || event_type !== 1) return;
+function parseChatMessage(content: Document): void {
+    const message = content.body?.innerHTML || '';
+    const autoReloadOf = /SmokeDetector: Auto (?:un)?(?:watch|blacklist) of/;
+    const blacklistsReloaded = /Blacklists reloaded at/;
 
-    updateWatchesAndBlacklists(content);
+    // make sure the (un)watch/blacklist happened recently
+    if (!autoReloadOf.test(message) || !blacklistsReloaded.test(message)) return;
+
+    const regexText = content.querySelectorAll('code')[1].innerHTML;
+    const anchorHtml = content.querySelectorAll('a')?.[1].innerHTML;
+    const action = (['watch', 'unwatch', 'blacklist', 'unblacklist'] as const)
+        .find(word => {
+            const regex = new RegExp(`Auto\\s${word}\\sof\\s`);
+
+            return regex.test(anchorHtml);
+        }) || 'watch'; // watch by default
+
+    updateKeywordLists(regexText, action);
+}
+
+export function newChatEventOccurred({ event_type, user_id, content }: ChatParsedEvent): void {
+    if ((user_id !== smokeyId && user_id !== metasmokeId) || event_type !== 1) return;
+
+    parseChatMessage(content);
+
+    const message = content.body?.innerHTML || '';
+    // before updating Domains.pullRequests, make sure to update keyword lists
+    // based on the pr that was merged
+    const prId = Number(/Merge pull request #(\d+)/.exec(message)?.[1]);
+    const pr = Domains.pullRequests.find(({ id }) => id === prId);
+    if (pr && prId) {
+        const { regex, type } = pr;
+        updateKeywordLists(regex.source, type);
+    }
 
     // don't wait for that to finish for the function to return
-    getUpdatedPrInfo(content)
-        .then(newGithubPrInfo => Domains.githubPullRequests = newGithubPrInfo || [])
+    getUpdatedPrInfo(message)
+        .then(info => Domains.pullRequests = info || [])
         .catch(error => console.error(error));
 }
