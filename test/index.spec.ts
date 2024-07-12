@@ -46,10 +46,7 @@ describe('index helpers', () => {
     });
 
     it('should figure out if a domain is caught or not', () => {
-        const { watched, blacklisted } = Domains;
-
-        const isWatched = (keyword: string): boolean => helpers.isCaught(watched, keyword);
-        const isBlacklisted = (keyword: string): boolean => helpers.isCaught(blacklisted, keyword);
+        const { isWatched, isBlacklisted } = helpers;
 
         const validWatches = ['essayssos.com', 'trimfire', 'erozon', 'saleleads.net', 'SaleLeads.net'];
         const invalidWatches = ['non-existent-keyword', 'google.com'];
@@ -61,6 +58,16 @@ describe('index helpers', () => {
 
         validBlacklists.forEach(keyword => expect(isBlacklisted(keyword)).to.be.true);
         invalidBlacklists.forEach(keyword => expect(isBlacklisted(keyword)).to.be.false);
+
+        // https://github.com/Charcoal-SE/SmokeDetector/wiki/Commands#non--number-blacklists-and-watchlist
+        const partialW = ['randessayssos.com.com', 'atrimfire'];
+        partialW.forEach(keyword => expect(isWatched(keyword)).to.be.false);
+
+        const notPartialW = ['!erozon', '.SaleLeads.net', '.ESSAYssos.com'];
+        notPartialW.forEach(keyword => expect(isWatched(keyword)).to.be.true);
+
+        const partialB = ['testpowerigfaustralia', '!healthcaresup', '@ewebtonic.in'];
+        partialB.forEach(keyword => expect(isBlacklisted(keyword)).to.be.true);
     });
 
     it('should correctly pluralise words', () => {

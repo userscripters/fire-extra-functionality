@@ -113,7 +113,7 @@
     const shortenerPathRegex = /\(\?-i:(\w+)\)\(\?#[a-zA-Z.]+\)/;
     const urlPath = keyword.match(shortenerPathRegex)?.[1];
     if (!urlPath) return [];
-    else return [new RegExp(urlPath)];
+    else return [new RegExp(urlPath, "s")];
   }
   function getRegexesFromTxtFile(fileContent, position) {
     return fileContent.split("\n").flatMap((line) => {
@@ -121,7 +121,11 @@
       if (!keyword) return [];
       let regexToReturn;
       try {
-        regexToReturn = new RegExp(keyword, "i");
+        regexToReturn = new RegExp(
+          // https://github.com/Charcoal-SE/SmokeDetector/wiki/Commands#non--number-blacklists-and-watchlist
+          position === 2 ? `\\b${keyword}\\b` : keyword,
+          "is"
+        );
       } catch (error) {
         return makeRegexESCompatible(keyword);
       }
@@ -256,12 +260,14 @@
   }
   function updateKeywordLists(regex, action) {
     try {
-      const newRegex = new RegExp(regex, "i");
-      const compare = (regex2) => regex2.source !== newRegex.source;
+      const newRegex = new RegExp(regex, "is");
+      const compare = (regex2) => regex2.source !== newRegex.source && regex2.source !== `\\b${newRegex.source}\\b`;
       switch (action) {
-        case "watch":
-          Domains.watched.push(newRegex);
+        case "watch": {
+          const modified = new RegExp(`\\b${newRegex.source}\\b`, "si");
+          Domains.watched.push(modified);
           break;
+        }
         case "blacklist":
           Domains.watched = Domains.watched.filter(compare);
           Domains.blacklisted.push(newRegex);
@@ -475,7 +481,12 @@
       return tpCount >= 5 && fpCount + naaCount === 0 && Number(seHits) < 5;
     },
     // given a regexes array and a domain, find if the latter is matched by any items in the former
-    isCaught: (regexes, domain) => regexes.some((regex) => regex.test(domain)),
+    isCaught: (type, domain) => {
+      const regexes = Domains[`${type}ed`];
+      return regexes.some((regex) => regex.test(domain));
+    },
+    isWatched: (domain) => helpers.isCaught("watch", domain),
+    isBlacklisted: (domain) => helpers.isCaught("blacklist", domain),
     // get the id the domain li has - dots are replaced with dash
     getDomainId: (domainName) => `fire-extra-${domainName.replace(/\./g, "-")}`,
     // helper to pluralise strings
@@ -510,8 +521,8 @@
     const domainLi = document.getElementById(domainId);
     const domainName = term.includes(".") ? "" : domainLi?.parentElement?.parentElement?.firstChild?.textContent;
     if (!seResultCount || !metasmokeStats?.length) return;
-    const isWatched = helpers.isCaught(Domains.watched, term);
-    const isBlacklisted = helpers.isCaught(Domains.blacklisted, term);
+    const isWatched = helpers.isWatched(term);
+    const isBlacklisted = helpers.isBlacklisted(term);
     const qualifiesForWatch = helpers.qualifiesForWatch(metasmokeStats, seResultCount);
     const qualifiesForBlacklist = helpers.qualifiesForBlacklist(metasmokeStats, seResultCount);
     const watch = {

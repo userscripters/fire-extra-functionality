@@ -84,15 +84,18 @@ function updateKeywordLists(
     action: 'watch' | 'unwatch' | 'blacklist' | 'unblacklist'
 ): void {
     try {
-        const newRegex = new RegExp(regex, 'i');
+        const newRegex = new RegExp(regex, 'is');
 
-        const compare = (regex: RegExp): boolean => regex.source !== newRegex.source;
+        const compare = (regex: RegExp): boolean =>
+            regex.source !== newRegex.source && regex.source !== `\\b${newRegex.source}\\b`;
 
         switch (action) {
-            case 'watch':
-                Domains.watched.push(newRegex);
+            case 'watch': {
+                const modified = new RegExp(`\\b${newRegex.source}\\b`, 'si');
+                Domains.watched.push(modified);
 
                 break;
+            }
             case 'blacklist':
                 // if it is a blacklist, also remove the item from the watchlist
                 Domains.watched = Domains.watched.filter(compare);

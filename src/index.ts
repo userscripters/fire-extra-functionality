@@ -68,7 +68,15 @@ export const helpers = {
     },
 
     // given a regexes array and a domain, find if the latter is matched by any items in the former
-    isCaught: (regexes: RegExp[], domain: string): boolean => regexes.some(regex => regex.test(domain)),
+    isCaught: (type: 'watch' | 'blacklist', domain: string): boolean => {
+        const regexes = Domains[`${type}ed`];
+
+        return regexes.some(regex => regex.test(domain));
+    },
+
+    isWatched: (domain: string): boolean => helpers.isCaught('watch', domain),
+
+    isBlacklisted: (domain: string): boolean => helpers.isCaught('blacklist', domain),
 
     // get the id the domain li has - dots are replaced with dash
     getDomainId: (domainName: string): string => `fire-extra-${domainName.replace(/\./g, '-')}`,
@@ -127,8 +135,8 @@ function updateEmojisInformation(term: string): void {
 
     if (!seResultCount || !metasmokeStats?.length) return;
 
-    const isWatched = helpers.isCaught(Domains.watched, term);
-    const isBlacklisted = helpers.isCaught(Domains.blacklisted, term);
+    const isWatched = helpers.isWatched(term);
+    const isBlacklisted = helpers.isBlacklisted(term);
 
     const qualifiesForWatch = helpers.qualifiesForWatch(metasmokeStats, seResultCount);
     const qualifiesForBlacklist = helpers.qualifiesForBlacklist(metasmokeStats, seResultCount);

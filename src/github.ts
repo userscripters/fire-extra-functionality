@@ -30,7 +30,7 @@ function makeRegexESCompatible(keyword: string): RegExp[] {
 
     const urlPath = keyword.match(shortenerPathRegex)?.[1];
     if (!urlPath) return [];
-    else return [new RegExp(urlPath)];
+    else return [new RegExp(urlPath, 's')];
 }
 
 export function getRegexesFromTxtFile(fileContent: string, position: number): RegExp[] {
@@ -40,7 +40,12 @@ export function getRegexesFromTxtFile(fileContent: string, position: number): Re
 
         let regexToReturn;
         try {
-            regexToReturn = new RegExp(keyword, 'i');
+            regexToReturn = new RegExp(
+                // https://github.com/Charcoal-SE/SmokeDetector/wiki/Commands#non--number-blacklists-and-watchlist
+
+                position === 2 ? `\\b${keyword}\\b` : keyword,
+                'is'
+            );
         } catch (error) {
             // regex is incompatible with the ES regex engine
             // for (?-i:abcdefg)(?#bit.ly) regexes

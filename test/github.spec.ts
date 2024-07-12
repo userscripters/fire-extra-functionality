@@ -8,6 +8,7 @@ import {
     parseApiResponse
 } from '../src/github';
 import jsdom from "jsdom";
+import { Domains } from '../src/domain_stats';
 
 const { JSDOM } = jsdom;
 
@@ -80,11 +81,20 @@ describe('github helpers', () => {
             .replace(/\\/mg, '')
             .split('\n');
 
-        expect(allParsed.every(item => item instanceof RegExp)); // make sure they're all regexes
+        expect(allParsed.every(item => item instanceof RegExp)).to.be.true; // make sure they're all regexes
+
+        const oldWatched = Domains.watched;
+        const oldBlacklisted = Domains.blacklisted;
+
+        Domains.watched = watchedParsed;
+        Domains.blacklisted = blacklistedParsed;
 
         // the array should contain the right regexes
-        expect(watches.every(keyword => helpers.isCaught(watchedParsed, keyword))).to.be.true;
-        expect(blacklists.every(keyword => helpers.isCaught(blacklistedParsed, keyword))).to.be.true;
+        expect(watches.every(keyword => helpers.isWatched(keyword))).to.be.true;
+        expect(blacklists.every(keyword => helpers.isBlacklisted(keyword))).to.be.true;
+
+        Domains.watched = oldWatched;
+        Domains.blacklisted = oldBlacklisted;
     });
 
     it('should correctly parse a sample GH API response', () => {

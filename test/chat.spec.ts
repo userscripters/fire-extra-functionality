@@ -64,20 +64,19 @@ describe('chat helpers', function() {
                 );
             });
 
-        const { watched, blacklisted } = Domains;
-        const { isCaught } = helpers;
+        const { isWatched, isBlacklisted } = helpers;
 
         // random-domain.com was first watched, then unwatched and shouldn't be in the watchlist
-        expect(isCaught(watched, 'random-domain.com')).to.be.false;
-        expect(isCaught(blacklisted, 'random-random-domain.com')).to.be.true;
-        expect(isCaught(blacklisted, 'tenderpublish')).to.be.false; // was unblacklisted
-        expect(isCaught(watched, 'domain.with.a.few.dots.com')).to.be.true;
-        expect(isCaught(blacklisted, 'domain.with.many.many.dots.com')).to.be.true;
+        expect(isWatched('random-domain.com')).to.be.false;
+        expect(isBlacklisted('random-random-domain.com')).to.be.true;
+        expect(isBlacklisted('tenderpublish')).to.be.false; // was unblacklisted
+        expect(isWatched('domain.with.a.few.dots.com')).to.be.true;
+        expect(isBlacklisted('domain.with.many.many.dots.com')).to.be.true;
 
         // nayvi was blacklisted, therefore it shouldn't be in the watchlist, but in the blacklist
-        expect(isCaught(watched, 'nayvi')).to.be.false;
-        expect(isCaught(blacklisted, 'nayvi')).to.be.true;
-        expect(isCaught(blacklisted, 'naYvi')).to.be.true;
+        expect(isWatched('nayvi')).to.be.false;
+        expect(isBlacklisted('nayvi')).to.be.true;
+        expect(isBlacklisted('naYvi')).to.be.true;
 
         // a user id other than SD's one shouldn't change the watchlist or the blacklist
         const random = new JSDOM(getRandomMessage(chatMessage, 'watch', 'example\\.com')).window.document;
@@ -85,7 +84,7 @@ describe('chat helpers', function() {
         newChatEventOccurred({ event_type: 1, user_id: 123456, content: random }); // not Smokey's id
         newChatEventOccurred({ event_type: 12, user_id: 120914, content: random }); // not interested in that event type
 
-        expect(isCaught(watched, 'example.com')).to.be.false;
+        expect(isWatched('example.com')).to.be.false;
     });
 
     it('should update keyword lists once a pull request is merged', async () => {
@@ -105,22 +104,22 @@ describe('chat helpers', function() {
             }
         ];
 
-        const { isCaught } = helpers;
+        const { isWatched, isBlacklisted } = helpers;
 
         // Merge pull request #12085
-        expect(isCaught(Domains.blacklisted, 'spam.com')).to.be.false;
+        expect(isBlacklisted('spam.com')).to.be.false;
         const merge = await getMessage(65938518);
         newChatEventOccurred(
             { event_type: 1, user_id: 120914, content: new JSDOM(merge).window.document }
         );
-        expect(isCaught(Domains.blacklisted, 'spam.com')).to.be.true;
+        expect(isBlacklisted('spam.com')).to.be.true;
 
         // Closed pull request #12080.
         const close = await getMessage(65937100);
         newChatEventOccurred(
             { event_type: 1, user_id: 120914, content: new JSDOM(close).window.document }
         );
-        expect(isCaught(Domains.watched, 'example.com')).to.be.false;
-        expect(isCaught(Domains.blacklisted, 'example.com')).to.be.false;
+        expect(isWatched('example.com')).to.be.false;
+        expect(isBlacklisted('example.com')).to.be.false;
     });
 });
