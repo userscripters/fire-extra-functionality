@@ -148,11 +148,18 @@ export function newChatEventOccurred({ event_type, user_id, content }: ChatParse
     const pr = Domains.pullRequests.find(({ id }) => id === prId);
     if (pr && prId) {
         const { regex, type } = pr;
+
         updateKeywordLists(regex.source, type);
+        Domains.pullRequests = Domains.pullRequests
+            .filter(({ id }) => id !== prId);
     }
 
     // don't wait for that to finish for the function to return
     getUpdatedPrInfo(message)
-        .then(info => Domains.pullRequests = info || [])
+        .then(info => {
+            Domains.pullRequests = (info || [])
+                // since info from API might be cached
+                .filter(({ id }) => id !== prId);
+        })
         .catch(error => console.error(error));
 }

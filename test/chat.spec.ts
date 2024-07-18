@@ -115,11 +115,16 @@ describe('chat helpers', function() {
         expect(isBlacklisted('spam.com')).to.be.true;
 
         // Closed pull request #12080.
+        expect(Domains.pullRequests.find(pr => pr.id === 12080)).to.not.be.undefined;
         const close = await getMessage(65937100);
         newChatEventOccurred(
             { event_type: 1, user_id: 120914, content: new JSDOM(close).window.document }
         );
         expect(isWatched('example.com')).to.be.false;
         expect(isBlacklisted('example.com')).to.be.false;
+
+        // #12085 and #12080 should be removed from Domains.pullRequests
+        expect(Domains.pullRequests.find(pr => pr.id === 12085)).to.be.undefined;
+        expect(Domains.pullRequests.find(pr => pr.id === 12080)).to.be.undefined;
     });
 });
