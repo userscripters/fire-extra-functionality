@@ -306,8 +306,11 @@
     if (pr && prId) {
       const { regex, type } = pr;
       updateKeywordLists(regex.source, type);
+      Domains.pullRequests = Domains.pullRequests.filter(({ id }) => id !== prId);
     }
-    getUpdatedPrInfo(message).then((info) => Domains.pullRequests = info || []).catch((error) => console.error(error));
+    getUpdatedPrInfo(message).then((info) => {
+      Domains.pullRequests = (info || []).filter(({ id }) => id !== prId);
+    }).catch((error) => console.error(error));
   }
 
   // src/stackexchange.ts
