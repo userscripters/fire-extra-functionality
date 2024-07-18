@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         FIRE Additional Functionality
-// @version      1.4.1
+// @version      1.4.2
 // @author       double-beep
 // @contributor  Xnero
 // @description  Watch, blacklist and see domain stats directly from the FIRE popup!
