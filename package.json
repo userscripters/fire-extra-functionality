@@ -5,7 +5,8 @@
   "scripts": {
     "esbuild": "node build.js",
     "build": "npm run lint && npm run esbuild",
-    "lint": "eslint src --fix --ext .ts",
+    "lint": "eslint src",
+    "lintTst": "eslint test --fix",
     "test": "TS_NODE_PROJECT='./test/tsconfig.json' mocha test/**/*.spec.ts*"
   },
   "repository": {
@@ -20,21 +21,21 @@
   },
   "homepage": "https://github.com/userscripters/fire-extra-functionality#readme",
   "devDependencies": {
-    "@types/chai": "^4.3.17",
+    "@eslint/js": "^9.9.1",
+    "@stylistic/eslint-plugin": "^2.6.4",
+    "@types/chai": "^4.3.18",
     "@types/jsdom": "^21.1.7",
     "@types/mocha": "^10.0.7",
-    "@types/node": "^20.14.15",
+    "@types/node": "^22.5.0",
     "@types/tampermonkey": "^5.0.3",
-    "@typescript-eslint/eslint-plugin": "^7.18.0",
-    "@typescript-eslint/parser": "^7.18.0",
     "chai": "^5.1.1",
     "cross-env": "^7.0.3",
-    "esbuild": "^0.23.0",
-    "eslint": "^8.57.0",
-    "jsdom": "^24.1.1",
+    "esbuild": "^0.23.1",
+    "jsdom": "^25.0.0",
     "mocha": "^10.7.3",
     "ts-node": "^10.9.2",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "typescript-eslint": "^8.2.0"
   },
   "type": "module"
 }

@@ -4,7 +4,7 @@ export interface GithubApiResponse {
     state: 'open' | 'closed';
     user: {
         id: number;
-    }
+    };
 }
 
 export interface GithubApiInformation {
@@ -28,9 +28,9 @@ export const githubUrls = {
 function makeRegexESCompatible(keyword: string): RegExp[] {
     const shortenerPathRegex = /\(\?-i:(\w+)\)\(\?#[a-zA-Z.]+\)/;
 
-    const urlPath = keyword.match(shortenerPathRegex)?.[1];
-    if (!urlPath) return [];
-    else return [new RegExp(urlPath, 's')];
+    const path = shortenerPathRegex.exec(keyword)?.[1];
+    if (!path) return [];
+    else return [new RegExp(path, 's')];
 }
 
 export function getRegexesFromTxtFile(fileContent: string, position: number): RegExp[] {
@@ -46,7 +46,7 @@ export function getRegexesFromTxtFile(fileContent: string, position: number): Re
                 position === 2 ? `\\b${keyword}\\b` : keyword,
                 'is'
             );
-        } catch (error) {
+        } catch {
             // regex is incompatible with the ES regex engine
             // for (?-i:abcdefg)(?#bit.ly) regexes
             // we should attempt to make them ES compatible
@@ -68,7 +68,7 @@ export function parseApiResponse(jsonData: GithubApiResponse[]): GithubApiInform
             let regex;
             try {
                 regex = new RegExp(/(?:Watch|Blacklist)\s(.*)/.exec(title)?.[1] || '');
-            } catch (error) {
+            } catch {
                 return [];
             }
 

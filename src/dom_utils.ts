@@ -132,28 +132,27 @@ function getColouredSpan(feedbackCount: number, feedback: 'tp' | 'fp' | 'naa'): 
     return span;
 }
 
-export function getColouredSpans([tpCount, fpCount, naaCount]: number[]): Array<HTMLSpanElement | string> {
+export function getColouredSpans([tpCount, fpCount, naaCount]: number[]): (HTMLSpanElement | string)[] {
     // {} are replaced with commas, so the feedbacks are not cramped up
     const feedbacks = [
         {
             count: tpCount,
             type: 'tp'
         },
-        {},
         {
             count: fpCount,
             type: 'fp'
         },
-        {},
         {
             count: naaCount,
             type: 'naa'
         }
     ] as Feedbacks[];
 
-    return feedbacks.map(({ count, type }) => type ? getColouredSpan(count, type) : ', ');
+    return feedbacks
+        .map(({ count, type }) => getColouredSpan(count, type))
+        .flatMap((item, i) => i === feedbacks.length - 1 ? [item] : [item, ', ']);
 }
-
 
 export function getPendingPrElement(pr: GithubApiInformation): HTMLDivElement {
     const { author, type, regex, id } = pr;
@@ -177,7 +176,7 @@ export function getPendingPrElement(pr: GithubApiInformation): HTMLDivElement {
     return container;
 }
 
-export function updateSeCount(count: string, domainLi: Element): void {
+export function updateSeCount(count: string, domainLi: Element | null): void {
     if (!domainLi || !count) return; // in case the popup is closed before the request is finished
 
     const hitCountAnchor = domainLi.querySelector('.fire-extra-se-results a');
@@ -191,7 +190,7 @@ export function updateSeCount(count: string, domainLi: Element): void {
     hitCountAnchor.innerHTML = 'SE search';
 }
 
-export function updateMsCounts(counts: number[], domainLi: Element): void {
+export function updateMsCounts(counts: number[], domainLi: Element | null): void {
     const msStats = domainLi?.querySelector('.fire-extra-ms-stats');
     if (!msStats) return;
 
@@ -200,7 +199,7 @@ export function updateMsCounts(counts: number[], domainLi: Element): void {
 
 // Update MS stats both in allDomainInformation and in the DOM
 export async function triggerDomainUpdate(domainIdsValid: number[]): Promise<string[]> {
-    const domainStats = await Domains.getTpFpNaaCountFromDomains(domainIdsValid) || {};
+    const domainStats = await Domains.getTpFpNaaCountFromDomains(domainIdsValid);
 
     return Object
         .entries(domainStats)
@@ -212,7 +211,14 @@ export async function triggerDomainUpdate(domainIdsValid: number[]): Promise<str
             if (!domainLi) return [];
 
             updateMsCounts(feedbackCount, domainLi);
-            Domains.allDomainInformation[domainName].metasmoke = feedbackCount;
+            if (Domains.allDomainInformation[domainName]) {
+                Domains.allDomainInformation[domainName].metasmoke = feedbackCount;
+            } else {
+                Domains.allDomainInformation[domainName] = {
+                    metasmoke: feedbackCount,
+                    stackexchange: '0'
+                };
+            }
 
             return [domainName];
         });

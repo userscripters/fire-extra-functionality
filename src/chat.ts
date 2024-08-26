@@ -5,7 +5,7 @@ import { Domains } from './domain_stats';
 declare const toastr: Toastr;
 
 export interface ChatObject {
-    addEventHandlerHook(callback: (eventInfo: ChatEvent) => void): void;
+    addEventHandlerHook: (callback: (eventInfo: ChatEvent) => void) => void;
 }
 
 export interface ChatParsedEvent {
@@ -112,20 +112,19 @@ function updateKeywordLists(
             default:
         }
     } catch (error) {
-        return;
+        console.error('An error occurred', error);
     }
 }
 
 function parseChatMessage(content: Document): void {
-    const message = content.body?.innerHTML || '';
+    const message = content.body.innerHTML || '';
     const autoReloadOf = /SmokeDetector: Auto (?:un)?(?:watch|blacklist) of/;
-    const blacklistsReloaded = /Blacklists reloaded at/;
 
     // make sure the (un)watch/blacklist happened recently
-    if (!autoReloadOf.test(message) || !blacklistsReloaded.test(message)) return;
+    if (!autoReloadOf.test(message) || !message.includes('Blacklists reloaded at')) return;
 
     const regexText = content.querySelectorAll('code')[1].innerHTML;
-    const anchorHtml = content.querySelectorAll('a')?.[1].innerHTML;
+    const anchorHtml = content.querySelectorAll('a')[1].innerHTML;
     const action = (['watch', 'unwatch', 'blacklist', 'unblacklist'] as const)
         .find(word => {
             const regex = new RegExp(`Auto\\s${word}\\sof\\s`);
@@ -141,7 +140,7 @@ export function newChatEventOccurred({ event_type, user_id, content }: ChatParse
 
     parseChatMessage(content);
 
-    const message = content.body?.innerHTML || '';
+    const message = content.body.innerHTML || '';
     // before updating Domains.pullRequests, make sure to update keyword lists
     // based on the pr that was merged
     const prId = Number(/Merge pull request #(\d+)/.exec(message)?.[1]);
@@ -161,5 +160,5 @@ export function newChatEventOccurred({ event_type, user_id, content }: ChatParse
                 // since info from API might be cached
                 .filter(({ id }) => id !== prId);
         })
-        .catch(error => console.error(error));
+        .catch((error: unknown) => console.error(error));
 }

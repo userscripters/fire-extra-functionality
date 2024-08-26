@@ -39,8 +39,9 @@ export function getSeSearchResults(term: string): Promise<string> {
             onload: ({ status, statusText, responseText }) => {
                 if (status !== 200) {
                     const message = getSeSearchErrorMessage(status, statusText, term);
+                    reject(message);
 
-                    return reject(message);
+                    return;
                 }
 
                 const parsed = new DOMParser().parseFromString(responseText, 'text/html');

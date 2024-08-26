@@ -21,10 +21,10 @@ interface GraphQLErrorInformation {
 type GraphQLResponse = {
     data: {
         spam_domains: GraphQLSpamDomains[];
-    }
+    };
 } | {
     errors: GraphQLErrorInformation[];
-}
+};
 
 interface DomainsForPostIdItems {
     id: number;
@@ -56,8 +56,8 @@ function getDomainPostsQuery(idsArray: number[]): string {
 export async function getGraphQLInformation(idsArray: number[]): Promise<GraphQLResponse> {
     const query = getDomainPostsQuery(idsArray);
     const payload = {
-        'query': query,
-        'variables': null
+        query,
+        variables: null
     };
 
     const url = `https://metasmoke.erwaysoftware.com/api/graphql?key=${metasmokeApiKey}`;
@@ -91,7 +91,7 @@ function getPostCounts(parsedHtml: Document): number[] {
     const tabsSelector = '.nav-tabs li:not([role="presentation"])';
 
     const counts = [...parsedHtml.querySelectorAll<HTMLAnchorElement>(tabsSelector)]
-        .map(element => /\d+/.exec(element?.textContent?.trim() || '')?.[0])
+        .map(element => /\d+/.exec(element.textContent?.trim() || '')?.[0])
         .map(Number);
 
     // Note: in case no result is found in MS, the element

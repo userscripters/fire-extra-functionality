@@ -9,23 +9,20 @@ import {
 import { Toastr } from './index';
 
 declare const toastr: Toastr;
-interface MetasmokeDomainStats {
-    [key: string]: number[];
-}
+type MetasmokeDomainStats = Record<string, number[]>;
 
-export interface DomainStats {
-    [key: string]: {
-        metasmoke: number[]; // the tp, fp and naa count respectively
-        stackexchange: string;
-    }
-}
+export type DomainStats = Record<string, {
+    metasmoke: number[]; // the tp, fp and naa count respectively
+    stackexchange: string;
+} | undefined>;
 
 // this class hack is used to avoid using top-level await which is tricky in testing
-// and requires module: esnext which messes up the compiled file
+// and requires module: esnext that messes up the compiled file
 export class Domains {
-    public static allDomainInformation: DomainStats = {}; // contains both the SE hit count and the MS feedbacks
+    // contains both the SE hit count and the MS feedbacks
+    public static allDomainInformation: DomainStats = {};
 
-    public static watched: RegExp[];
+    public static watched: RegExp[] = [];
     public static blacklisted: RegExp[];
     public static pullRequests: GithubApiInformation[];
 
@@ -33,13 +30,7 @@ export class Domains {
     public static redirectors: string[];
 
     public static async fetchAllDomainInformation(): Promise<void> {
-        // nothing to do; all information is successfully fetched
-        if (this.watched
-         && this.blacklisted
-         && this.pullRequests
-         && this.whitelisted
-         && this.redirectors) return;
-
+        if (this.watched.length) return;
         // Those files are frequently updated, so they can't be in @resources
         // Thanks tripleee!
         // https://github.com/Charcoal-SE/halflife/blob/ab0fa5fc2a048b9e17762ceb6e3472e4d9c65317/halflife.py#L77
@@ -98,6 +89,7 @@ export class Domains {
 
             console.error('Error while trying to fetch domain stats from GraphiQL.', error);
         }
+
         return domainStats;
     }
 }

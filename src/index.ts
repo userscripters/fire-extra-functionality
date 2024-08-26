@@ -22,16 +22,16 @@ import {
 } from './dom_utils';
 
 export interface Toastr {
-    success(message: string): void;
-    error(message: string): void;
+    success: (message: string) => void;
+    error: (message: string) => void;
 }
 
 declare const CHAT: ChatObject;
 declare const toastr: Toastr;
 declare const fire: {
-    reportCache: {
-        [key: string]: { id: number; }
-    }
+    reportCache: Record<string, {
+        id: number;
+    }>;
 };
 
 const metasmokeSearchUrl = 'https://metasmoke.erwaysoftware.com/search';
@@ -122,9 +122,11 @@ export const helpers = {
 };
 
 function updateEmojisInformation(term: string): void {
+    if (!Domains.allDomainInformation[term]) return;
+
     const {
         stackexchange: seResultCount,
-        metasmoke: metasmokeStats
+        metasmoke: metasmokeStats = []
     } = Domains.allDomainInformation[term];
 
     const domainId = helpers.getDomainId(term);
@@ -133,7 +135,7 @@ function updateEmojisInformation(term: string): void {
         ? ''
         : domainLi?.parentElement?.parentElement?.firstChild?.textContent as string;
 
-    if (!seResultCount || !metasmokeStats?.length) return;
+    if (!seResultCount || !metasmokeStats.length) return;
 
     const isWatched = helpers.isWatched(term);
     const isBlacklisted = helpers.isBlacklisted(term);
@@ -177,10 +179,10 @@ function updateEmojisInformation(term: string): void {
     if (blacklist.suggested) blacklistButton.append(' ', getTick());
 
     // show buttons if action has not been taken
-    if (!isBlacklisted){
+    if (!isBlacklisted) {
         blacklistButton.style.display = 'inline';
 
-        if (!isWatched){
+        if (!isWatched) {
             watchButton.style.display = 'inline';
         }
     }
@@ -194,17 +196,15 @@ function updateStackSearchResultCount(term: string, domainLi: Element): void {
     // temp disabled, because it logs users out
     // getSeSearchResults(term)
     new Promise<string>(resolve => resolve('0')).then(hitCount => {
+        if (!Domains.allDomainInformation[term]) return;
+
         // update the info object
         Domains.allDomainInformation[term].stackexchange = hitCount;
         updateSeCount(hitCount, domainLi);
 
-        // only update 👀/🚫 if both SE and MS results have been fetched
-        const infoObject = Domains.allDomainInformation[term];
-        if (!infoObject.metasmoke || !infoObject.stackexchange) return;
-
         updateEmojisInformation(term);
-    }).catch((error: string) => {
-        toastr.error(error);
+    }).catch((error: unknown) => {
+        toastr.error(error as string);
         console.error(error);
     });
 }
@@ -214,18 +214,16 @@ function updateStackSearchResultCount(term: string, domainLi: Element): void {
 function updateMsResults(term: string, domainLi: Element): void {
     getMsSearchResults(term)
         .then(results => {
+            if (!Domains.allDomainInformation[term]) return;
+
             // update the info object
             Domains.allDomainInformation[term].metasmoke = results;
             updateMsCounts(results, domainLi);
 
-            // only update 👀/🚫 if both SE and MS results have been fetched
-            const infoObject = Domains.allDomainInformation[term];
-            if (!infoObject.metasmoke || !infoObject.stackexchange) return;
-
             updateEmojisInformation(term);
         })
-        .catch((error: string) => {
-            toastr.error(error);
+        .catch((error: unknown) => {
+            toastr.error(error as string);
             console.error(error);
         });
 }
@@ -309,7 +307,7 @@ function createDomainHtml(domainName: string, domainList: Element, child = false
     if (Domains.whitelisted.includes(domainName)) {
         domainItem.append(getTag('whitelisted'));
         return;
-    } else if (Domains.redirectors.includes(domainName) && !child) {
+    } else if (Domains.redirectors.includes(domainName)) {
         domainItem.append(getTag('shortener'));
         createDomainHtml(domainName, domainItem, true);
 
@@ -352,7 +350,7 @@ async function addHtmlToFirePopup(): Promise<void> {
 
     triggerDomainUpdate(domainIdsValid)
         .then(domainNames => domainNames.forEach(name => updateEmojisInformation(name)))
-        .catch((error: string) => toastr.error(error));
+        .catch((error: unknown) => toastr.error(error as string));
 
     domains
         .map(item => item.domain)
@@ -362,6 +360,7 @@ async function addHtmlToFirePopup(): Promise<void> {
 }
 
 void (async function(): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!globalThis.window) return; // for tests
 
     await new Promise(resolve => setTimeout(resolve, 0));
