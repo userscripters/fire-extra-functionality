@@ -113,7 +113,7 @@ export const helpers = {
     getRegexForPathShortener: (path: string, domain?: string): string => {
         // https://stackoverflow.com/a/3561711
         // https://chat.stackexchange.com/transcript/message/65665204
-        const escaped = path.replace(/[/\-\\^$*+?.()|[\]{}]/g, '\\$&');
+        const escaped = path.replace(/[\\^$*?.()|[\]{}]/g, '\\$&');
         const mainPart = `(?-i:${escaped})`;
         const comment = `(?#${domain || ''})`;
 

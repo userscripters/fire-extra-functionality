@@ -112,9 +112,13 @@ describe('index helpers', () => {
                 '3vcWir3': ['bit.ly', '(?-i:3vcWir3)(?#bit.ly)'],
                 'FNEuyd': ['goo.gl', '(?-i:FNEuyd)(?#goo.gl)'],
                 'KdxEAt91D7k': ['youtu.be', '(?-i:KdxEAt91D7k)(?#youtu.be)'],
-                '+jJyLwSpqLeAzNmFi': ['t.me', String.raw`(?-i:\+jJyLwSpqLeAzNmFi)(?#t.me)`],
-                'davitacols/dataDisk': ['github repository', String.raw`(?-i:davitacols\/dataDisk)(?#github repository)`],
-                'arjun.muralidharan2': ['facebook', String.raw`(?-i:arjun\.muralidharan2)(?#facebook)`]
+                // don't escape +
+                '+jJyLwSpqLeAzNmFi': ['t.me', String.raw`(?-i:+jJyLwSpqLeAzNmFi)(?#t.me)`],
+                // don't escape /
+                'davitacols/dataDisk': ['github repository', String.raw`(?-i:davitacols/dataDisk)(?#github repository)`],
+                'arjun.muralidharan2': ['facebook', String.raw`(?-i:arjun\.muralidharan2)(?#facebook)`],
+                // don't escape -
+                'example-test': ['bit.ly', String.raw`(?-i:example-test)(?#bit.ly)`],
             }
         ).forEach(([path, info]) => {
             const [domain, expectedValue] = info;
