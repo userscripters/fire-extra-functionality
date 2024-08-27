@@ -268,53 +268,57 @@ function createHTMLForGivenList(domainName: string, domainItem: Element): void {
     addChatListeners(domainItem, githubPrOpenItem); // !!/watch, etc. buttons' listeners
 }
 
-function createDomainHtml(domainName: string, domainList: Element, child = false): void {
-    Domains.allDomainInformation[domainName] = {} as DomainStats[''];
+function createDomainHtml(name: string, list: Element, child = false): void {
+    Domains.allDomainInformation[name] = {} as DomainStats[''];
 
     const elementType = child ? 'ul' : 'li';
     const domainItem = document.createElement(elementType);
-    domainItem.id = helpers.getDomainId(domainName) + (child ? '-children' : '');
+    domainItem.id = helpers.getDomainId(name) + (child ? '-children' : '');
 
     if (child) {
         domainItem.style.marginLeft = '15px';
 
         const pathnames = [...document.querySelectorAll<HTMLAnchorElement>('.fire-reported-post a')]
             .map(anchor => new URL(anchor.href)) // create a URL object from each href
-            .filter(url => url.host === domainName) // just shorteners
+            .filter(url => url.host === name) // just shorteners
             .map(url => url.pathname.replace('/', '')); // remove trailing /
         const uniquePathnames = [...new Set(pathnames)]; // there might be duplicates
 
+        // https://github.com/userscripters/fire-extra-functionality/issues/166
+        // e.g. https://chat.stackexchange.com/transcript/message/66151288
+        if (!uniquePathnames.every(Boolean)) return;
+
         uniquePathnames.forEach(pathname => createDomainHtml(pathname, domainItem));
-        domainList.append(domainItem);
+        list.append(domainItem);
 
         return;
-    } else if (!domainName.includes('.')) { // path of URL shortener
+    } else if (!name.includes('.')) { // path of URL shortener
         // the path of a URL shortener doesn't belong to the post domains
         // as those fetched from the API, so we have to trigger a request manually:
-        updateMsResults(domainName, domainItem);
-        domainItem.append(domainName, ' ');
+        updateMsResults(name, domainItem);
+        domainItem.append(name, ' ');
     } else {
-        domainItem.append(domainName, ' ');
+        domainItem.append(name, ' ');
     }
 
-    domainList.append(domainItem);
+    list.append(domainItem);
 
     // TODO also address #ip (?? can be watched ??) and #stuff-up
     //      Stack Exchange URLs https://metasmoke.erwaysoftware.com/domains/groups/14 (??)
 
     // If the domain is whitelisted or a redirector, don't search for TPs/FPs/NAAs.
     // They often have too many hits on SE/MS, and they make the script slower
-    if (Domains.whitelisted.includes(domainName)) {
+    if (Domains.whitelisted.includes(name)) {
         domainItem.append(getTag('whitelisted'));
         return;
-    } else if (Domains.redirectors.includes(domainName)) {
+    } else if (Domains.redirectors.includes(name)) {
         domainItem.append(getTag('shortener'));
-        createDomainHtml(domainName, domainItem, true);
+        createDomainHtml(name, domainItem, true);
 
         return;
     }
 
-    createHTMLForGivenList(domainName, domainItem);
+    createHTMLForGivenList(name, domainItem);
 }
 
 async function addHtmlToFirePopup(): Promise<void> {
@@ -373,6 +377,7 @@ void (async function(): Promise<void> {
             // newChatEventOccurred has to accept a Document argument for content
             content: new DOMParser().parseFromString(event.content, 'text/html')
         }) as ChatParsedEvent;
+
         newChatEventOccurred(eventToPass);
     });
 
