@@ -111,8 +111,9 @@ function updateKeywordLists(
                 break;
             default:
         }
-    } catch (error) {
-        console.error('An error occurred', error);
+    } catch {
+        // eslint-disable-next-line no-useless-return
+        return;
     }
 }
 

@@ -103,12 +103,14 @@ function getPostCounts(parsedHtml: Document): number[] {
 }
 
 export function getMsSearchResults(term: string): Promise<number[]> {
-    const encoded = encodeURIComponent(term);
+    const url = new URL('https://metasmoke.erwaysoftware.com/search');
+    url.searchParams.set('utf8', '✓');
+    url.searchParams.set('body', term);
 
     return new Promise((resolve, reject) => {
         GM_xmlhttpRequest({
             method: 'GET',
-            url: `https://metasmoke.erwaysoftware.com/search?utf8=✓&body=${encoded}`,
+            url: url.toString(),
             onload: response => {
                 const { status, responseText } = response;
 
@@ -128,11 +130,12 @@ export function getMsSearchResults(term: string): Promise<number[]> {
 }
 
 export async function getAllDomainsFromPost(metasmokePostId: number): Promise<DomainsForPostIdItems[]> {
-    const method = `${metasmokePostId}/domains`;
-    const parameters = `?key=${metasmokeApiKey}&filter=${postDomainsApiFilter}&per_page=100`;
-    const msApiUrl = metasmokeApiBase + method + parameters;
+    const url = new URL(`${metasmokeApiBase}${metasmokePostId}/domains`);
+    url.searchParams.set('key', metasmokeApiKey);
+    url.searchParams.set('filter', postDomainsApiFilter);
+    url.searchParams.set('per_page', '100');
 
-    const apiCallResponse = await fetch(msApiUrl);
+    const apiCallResponse = await fetch(url.toString());
     const jsonResponse = await apiCallResponse.json() as DomainsForPostIdResponse;
 
     return jsonResponse.items;

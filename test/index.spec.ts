@@ -36,13 +36,36 @@ describe('index helpers', () => {
         // test the whitelisted domains and the redirectors which are all valid domains
         [...Domains.whitelisted, ...Domains.redirectors]
             .filter(domain => domain.includes('.')) // exclude exception
+            .map(domain => domain.replace(/\./g, '\\.'))
             .forEach(domainName => {
                 const msSearchUrl = helpers.getMetasmokeSearchUrl(domainName);
-                const urlObject = new URL(msSearchUrl);
-                const body = urlObject.searchParams.get('body');
+                const url = new URL(msSearchUrl);
 
-                expect(body).to.be.equal(`(?s:\\b${domainName}\\b)`);
+                const title = url.searchParams.get('title');
+                const body = url.searchParams.get('body');
+                const username = url.searchParams.get('username');
+
+                expect(body)
+                    .to.be.equal(title)
+                    .to.be.equal(username)
+                    .to.be.equal(
+                        helpers.isBlacklisted(
+                            // unescape
+                            domainName.replace(/\\./g, '.')
+                        )
+                            ? `(?i)${domainName}`
+                            : String.raw`(?s)${domainName}(?<=(?:^|\b)${domainName})(?:\b|$)`
+                    );
+
+                const or = url.searchParams.get('or_search');
+                expect(or).to.equal('1');
             });
+
+        const searchUrl = helpers.getMetasmokeSearchUrl('speakatoo\\.com');
+        const url = new URL(searchUrl);
+        const body = url.searchParams.get('body');
+
+        expect(body).to.be.equal(`(?i)speakatoo\\.com`);
     });
 
     it('should figure out if a domain is caught or not', () => {
@@ -112,8 +135,8 @@ describe('index helpers', () => {
                 '3vcWir3': ['bit.ly', '(?-i:3vcWir3)(?#bit.ly)'],
                 'FNEuyd': ['goo.gl', '(?-i:FNEuyd)(?#goo.gl)'],
                 'KdxEAt91D7k': ['youtu.be', '(?-i:KdxEAt91D7k)(?#youtu.be)'],
-                // don't escape +
-                '+jJyLwSpqLeAzNmFi': ['t.me', String.raw`(?-i:+jJyLwSpqLeAzNmFi)(?#t.me)`],
+                // escape +
+                '+jJyLwSpqLeAzNmFi': ['t.me', String.raw`(?-i:\+jJyLwSpqLeAzNmFi)(?#t.me)`],
                 // don't escape /
                 'davitacols/dataDisk': ['github repository', String.raw`(?-i:davitacols/dataDisk)(?#github repository)`],
                 'arjun.muralidharan2': ['facebook', String.raw`(?-i:arjun\.muralidharan2)(?#facebook)`],

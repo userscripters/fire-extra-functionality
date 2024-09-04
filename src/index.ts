@@ -38,17 +38,56 @@ const metasmokeSearchUrl = 'https://metasmoke.erwaysoftware.com/search';
 
 // export in an object for the tests
 export const helpers = {
+    generateSearchRegex: (text: string): string => {
+        // https://chat.stackexchange.com/transcript/message/55327802
+        // (slightly modified to improve readability)
+
+        let searchTerm = `(?s)(?:^|\\b)${text}(?:\\b|$)`;
+        const textNoNoncaptureGroups = text
+            .replace(/\(\?:/g, '(')
+            .replace(/\(\?-i:([^()]+)\)/, '$1');
+
+        const regex = /^(\w+(?![?*+{])|\(\?-i:[^+?*{}()|]+\)\w*(?![?*+{]))/;
+
+        if (!/[+?*{}()|]/.test(textNoNoncaptureGroups)) {
+            searchTerm = `(?s)${text}(?<=(?:^|\\b)${text})(?:\\b|$)`;
+        } else if (regex.test(text)) {
+            const replaced = text.replace(
+                regex,
+                '$1(?<=(?:^|\\b)$1)'
+            );
+
+            searchTerm = `(?s)${replaced}(?:\\b|$)`;
+        }
+
+        return searchTerm;
+    },
+
     // should be the same as "See the MS search here" text in PRs
     getMetasmokeSearchUrl: (term: string): string => {
-        const searchTerm = term.includes('.') // it's a domain
+        const text = term.includes('.') // it's a domain
             ? term
             : helpers.getRegexForPathShortener(term);
 
-        const bodyParam = `(?s:\\b${searchTerm}\\b)`;
-        const parameters = `?utf8=✓&body_is_regex=1&body=${bodyParam}`;
-        const fullUrl = metasmokeSearchUrl + parameters;
+        const unescaped = term.replace(/\\./g, '.');
+        const searchTerm = helpers.isBlacklisted(unescaped)
+            ? `(?i)${text}`
+            : helpers.generateSearchRegex(text);
 
-        return encodeURI(fullUrl);
+        const url = new URL(metasmokeSearchUrl);
+        url.searchParams.set('utf8', '✓');
+        // use OR instead of default AND
+        url.searchParams.set('or_search', '1');
+
+        url.searchParams.set('title_is_regex', '1');
+        url.searchParams.set('body_is_regex', '1');
+        url.searchParams.set('username_is_regex', '1');
+
+        url.searchParams.set('title', searchTerm);
+        url.searchParams.set('body', searchTerm);
+        url.searchParams.set('username', searchTerm);
+
+        return url.toString();
     },
 
     // Follow https://charcoal-se.org/smokey/Guidance-for-Blacklisting-and-Watching:
@@ -113,7 +152,7 @@ export const helpers = {
     getRegexForPathShortener: (path: string, domain?: string): string => {
         // https://stackoverflow.com/a/3561711
         // https://chat.stackexchange.com/transcript/message/65665204
-        const escaped = path.replace(/[\\^$*?.()|[\]{}]/g, '\\$&');
+        const escaped = path.replace(/[+\\^$*?.()|[\]{}]/g, '\\$&');
         const mainPart = `(?-i:${escaped})`;
         const comment = `(?#${domain || ''})`;
 
