@@ -76,8 +76,21 @@ describe('index helpers', () => {
         validWatches.forEach(keyword => expect(isWatched(keyword)).to.be.true);
         invalidWatches.forEach(keyword => expect(isWatched(keyword)).to.be.false);
 
-        const validBlacklists = ['powerigfaustralia', 'ewebtonic.in', 'healthcaresup', 'd680adc632091138ed9fd09659e15dc9'];
-        const invalidBlacklists = invalidWatches;
+        const validBlacklists = [
+            // blacklisted websites
+            'powerigfaustralia',
+            'ewebtonic.in',
+            'healthcaresup',
+            'd680adc632091138ed9fd09659e15dc9',
+
+            // bad keywords
+            'orvigomax',
+            'opstree.com'
+        ];
+        const invalidBlacklists = [
+            ...invalidWatches,
+            'blog.opstree.com' // test negative lookbehind
+        ];
 
         validBlacklists.forEach(keyword => expect(isBlacklisted(keyword)).to.be.true);
         invalidBlacklists.forEach(keyword => expect(isBlacklisted(keyword)).to.be.false);

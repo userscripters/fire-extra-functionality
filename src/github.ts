@@ -22,7 +22,8 @@ export const githubUrls = {
     whitelisted: 'https://raw.githubusercontent.com/userscripters/fire-extra-functionality/master/ini/whitelisted_domains.txt',
     redirectors: 'https://raw.githubusercontent.com/userscripters/fire-extra-functionality/master/ini/redirectors.txt',
     watched: 'https://raw.githubusercontent.com/Charcoal-SE/SmokeDetector/master/watched_keywords.txt',
-    blacklisted: 'https://raw.githubusercontent.com/Charcoal-SE/SmokeDetector/master/blacklisted_websites.txt'
+    blacklisted: 'https://raw.githubusercontent.com/Charcoal-SE/SmokeDetector/master/blacklisted_websites.txt',
+    bad: 'https://raw.githubusercontent.com/Charcoal-SE/SmokeDetector/master/bad_keywords.txt'
 };
 
 function makeRegexESCompatible(keyword: string): RegExp[] {

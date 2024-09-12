@@ -35,25 +35,32 @@ export class Domains {
         // Thanks tripleee!
         // https://github.com/Charcoal-SE/halflife/blob/ab0fa5fc2a048b9e17762ceb6e3472e4d9c65317/halflife.py#L77
         const [
-            watchedCall, blacklistedCall, prsCall, whitelistedCall, redirectorsCall
+            watchedCall, blacklistedCall, prsCall, whitelistedCall, redirectorsCall, badCall
         ] = await Promise.all(([
             fetch(githubUrls.watched),
             fetch(githubUrls.blacklisted),
             fetch(githubUrls.api),
             fetch(githubUrls.whitelisted),
-            fetch(githubUrls.redirectors)
+            fetch(githubUrls.redirectors),
+            fetch(githubUrls.bad)
         ]));
 
-        const [watched, blacklisted, prs, whitelisted, redirectors] = await Promise.all([
+        const [
+            watched, blacklisted, prs, whitelisted, redirectors, bad
+        ] = await Promise.all([
             watchedCall.text(),
             blacklistedCall.text(),
             prsCall.json() as Promise<GithubApiResponse[]>,
             whitelistedCall.text(),
-            redirectorsCall.text()
+            redirectorsCall.text(),
+            badCall.text()
         ]);
 
+        const badRegexes = getRegexesFromTxtFile(blacklisted, 0);
+        const blacklistedRegexes = getRegexesFromTxtFile(bad, 0);
+
         this.watched = getRegexesFromTxtFile(watched, 2);
-        this.blacklisted = getRegexesFromTxtFile(blacklisted, 0);
+        this.blacklisted = badRegexes.concat(blacklistedRegexes);
         this.pullRequests = parseApiResponse(prs);
 
         this.whitelisted = whitelisted.split('\n');
