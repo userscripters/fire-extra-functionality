@@ -19,7 +19,7 @@ describe('DOM utils', () => {
         // MS part
         expect(msPart.children[0].textContent).to.be.equal('MS');
         expect(msPart.children[1].classList.contains('fire-extra-ms-stats')).to.be.true;
-        expect(msPart.children[1].children[0]?.classList.contains('fire-extra-wait')).to.be.true;
+        expect(msPart.children[1].children[0].classList.contains('fire-extra-wait')).to.be.true;
 
         // SE part
         expect(sePart.classList.contains('fire-extra-se-results'));
@@ -93,6 +93,6 @@ describe('DOM utils', () => {
 
         expect(hitCountAnchor.innerHTML).to.be.equal('SE search');
         // expect(hitCountAnchor.innerHTML).to.be.equal('SE: 10.5k');
-        //expect(hitCountAnchor.getAttribute('fire-tooltip')).to.be.equal('10.5k hits on SE');
+        // expect(hitCountAnchor.getAttribute('fire-tooltip')).to.be.equal('10.5k hits on SE');
     });
 });

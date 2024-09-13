@@ -4,7 +4,7 @@ import {
     getSeResultCount,
     getShortenedResultCount
 } from '../src/stackexchange';
-import jsdom from "jsdom";
+import jsdom from 'jsdom';
 
 const { JSDOM } = jsdom;
 
@@ -14,7 +14,7 @@ describe('stackexchange helpers', () => {
     it('should correctly get the correct Stack Exchange search URL', () => {
         const data = {
             'example.com': 'https://stackexchange.com/search?q=url%3Aexample.com',
-            'KdxEAt91D7k': 'https://stackexchange.com/search?q=KdxEAt91D7k'
+            KdxEAt91D7k: 'https://stackexchange.com/search?q=KdxEAt91D7k'
         };
 
         Object

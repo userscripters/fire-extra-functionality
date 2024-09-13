@@ -7,15 +7,14 @@ import {
     getUpdatedPrInfo,
     parseApiResponse
 } from '../src/github';
-import jsdom from "jsdom";
+import jsdom from 'jsdom';
 import { Domains } from '../src/domain_stats';
 
 const { JSDOM } = jsdom;
 
 global.document = new JSDOM().window.document;
 
-const watchSample = String.raw
-`1494929269	tripleee	thewellnesscorner\.com
+const watchSample = String.raw`1494929269	tripleee	thewellnesscorner\.com
 1494929399	tripleee	optisolbusiness\.com
 1494997469	tripleee	careinfo\.in
 1494997580	tripleee	carebaba\.com
@@ -23,8 +22,7 @@ const watchSample = String.raw
 1495002561	tripleee	erozon
 1495005325	tripleee	onlinesupplementworld\.com
 1495006487	tripleee	ahealthadvisory\.com`;
-const blacklistedSample = String.raw
-`resolit\.us
+const blacklistedSample = String.raw`resolit\.us
 techinpost\.com
 hackerscontent\.com
 hrsoftwaresolution\.com
@@ -139,7 +137,7 @@ describe('github helpers', () => {
         validChatMessages.forEach(async message => {
             const content = new JSDOM(message).window.document;
 
-            const text = content.body?.innerHTML || '';
+            const text = content.body.innerHTML || '';
             const functionReturnValue = await getUpdatedPrInfo(text);
 
             expect(functionReturnValue).not.to.be.undefined;

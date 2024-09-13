@@ -15,8 +15,8 @@ function getRandomMessage(
 ): string {
     // linuxbuz\\.com is the (escaped domain) that's watched in the original message
     return original
-      .replace("Auto watch", `Auto ${action}`)
-      .replace("linuxbuz\\.com", escapedDomain);
+        .replace('Auto watch', `Auto ${action}`)
+        .replace('linuxbuz\\.com', escapedDomain);
 }
 
 async function getMessage(id: number): Promise<string> {
@@ -36,7 +36,7 @@ describe('chat helpers', function() {
 
         const messages = [
             'watch random-domain\\.com',
-            'blacklist random-random-domain\\.com',  
+            'blacklist random-random-domain\\.com',
             'unwatch random-domain\\.com',
             'unblacklist tenderpublish',
             'watch domain\\.with\\.a\\.few\\.dots\\.com',
@@ -49,7 +49,7 @@ describe('chat helpers', function() {
                 const actionType = messageSplit[0] as ChatMessageActions;
                 const domain = messageSplit[1];
 
-                const fullMessage = getRandomMessage(chatMessage, actionType, domain)
+                const fullMessage = getRandomMessage(chatMessage, actionType, domain);
 
                 return new JSDOM(fullMessage).window.document;
             })
@@ -64,7 +64,8 @@ describe('chat helpers', function() {
                 );
             });
 
-        const { isWatched, isBlacklisted } = helpers;
+        const isWatched = (domain: string): boolean => Boolean(helpers.isWatched(domain));
+        const { isBlacklisted } = helpers;
 
         // random-domain.com was first watched, then unwatched and shouldn't be in the watchlist
         expect(isWatched('random-domain.com')).to.be.false;
@@ -104,7 +105,8 @@ describe('chat helpers', function() {
             }
         ];
 
-        const { isWatched, isBlacklisted } = helpers;
+        const isWatched = (domain: string): boolean => Boolean(helpers.isWatched(domain));
+        const { isBlacklisted } = helpers;
 
         // Merge pull request #12085
         expect(isBlacklisted('spam.com')).to.be.false;

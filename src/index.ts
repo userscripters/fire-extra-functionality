@@ -106,16 +106,17 @@ export const helpers = {
             && Number(seHits) < 5; // not explicitly mentioned, but thought it's a good limit
     },
 
-    // given a regexes array and a domain, find if the latter is matched by any items in the former
-    isCaught: (type: 'watch' | 'blacklist', domain: string): boolean => {
+    // find if given string exists in the watchlist/blacklist
+    // returns the last regex from that list which matches that string
+    isCaught: (type: 'watch' | 'blacklist', domain: string): RegExp | undefined => {
         const regexes = Domains[`${type}ed`];
 
-        return regexes.some(regex => regex.test(domain));
+        return regexes.findLast(regex => regex.test(domain));
     },
 
-    isWatched: (domain: string): boolean => helpers.isCaught('watch', domain),
+    isWatched: (domain: string): RegExp | undefined => helpers.isCaught('watch', domain),
 
-    isBlacklisted: (domain: string): boolean => helpers.isCaught('blacklist', domain),
+    isBlacklisted: (domain: string): boolean => Boolean(helpers.isCaught('blacklist', domain)),
 
     // get the id the domain li has - dots are replaced with dash
     getDomainId: (domainName: string): string => `fire-extra-${domainName.replace(/\./g, '-')}`,
@@ -131,7 +132,13 @@ export const helpers = {
     },
 
     // the tooltip text of !!/watch, !!/blacklist buttons
-    getButtonsText: (action: 'watch' | 'blacklist', term: string, done: boolean, domain?: string): string => {
+    getButtonsText: (
+        action: 'watch' | 'blacklist',
+        term: string,
+        done: boolean,
+        domain?: string,
+        regex?: RegExp
+    ): string => {
         const command = action === 'watch' ? '!!/watch-' : '!!/blacklist-website-';
         const alreadyDone = 'action already taken';
 
@@ -142,9 +149,15 @@ export const helpers = {
                 .replace(/blogspot\.\w+(\.\w+)?$/, 'blogspot') // abc.blogspot.com => abc.blogspot
                 .replace(/\./g, '\\.'); // escape dots
 
+        const replacement = regex?.source.slice(2, -2)
+            // fire-tooltip content is parsed as HTML
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;');
+
         return done
             ? alreadyDone
-            : `${command} ${watchValue}`;
+            : `${command} ${action === 'blacklist' && regex ? replacement : watchValue}`;
     },
 
     // (?-i:) - case sensitive
@@ -183,14 +196,14 @@ function updateEmojisInformation(term: string): void {
     const qualifiesForBlacklist = helpers.qualifiesForBlacklist(metasmokeStats, seResultCount);
 
     const watch = {
-        human: helpers.getActionDone('watched', isWatched),
-        tooltip: helpers.getButtonsText('watch', term, isWatched || isBlacklisted, domainName),
+        human: helpers.getActionDone('watched', Boolean(isWatched)),
+        tooltip: helpers.getButtonsText('watch', term, Boolean(isWatched) || isBlacklisted, domainName),
         suggested: qualifiesForWatch && !isWatched && !isBlacklisted,
     };
 
     const blacklist = {
         human: helpers.getActionDone('blacklisted', isBlacklisted),
-        tooltip: helpers.getButtonsText('blacklist', term, isBlacklisted, domainName),
+        tooltip: helpers.getButtonsText('blacklist', term, isBlacklisted, domainName, isWatched),
         suggested: qualifiesForBlacklist && !isBlacklisted,
     };
 

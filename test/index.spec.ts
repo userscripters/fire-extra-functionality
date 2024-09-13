@@ -6,15 +6,19 @@ describe('index helpers', () => {
     before(async () => await Domains.fetchAllDomainInformation());
 
     it('should find if a domain with specific stats qualifies for watch', () => {
-        expect(helpers.qualifiesForWatch([1, 0, 0], '0')).to.be.true;
-        expect(helpers.qualifiesForWatch([5, 0, 0], '10')).to.be.false;
-        expect(helpers.qualifiesForWatch([1, 0, 1], '2')).to.be.false;
+        const { qualifiesForWatch: shouldWatch } = helpers;
+
+        expect(shouldWatch([1, 0, 0], '0')).to.be.true;
+        expect(shouldWatch([5, 0, 0], '10')).to.be.false;
+        expect(shouldWatch([1, 0, 1], '2')).to.be.false;
     });
 
     it('should find if a domain with specific stats qualifies for blacklist', () => {
-        expect(helpers.qualifiesForBlacklist([5, 0, 0], '4')).to.be.true;
-        expect(helpers.qualifiesForBlacklist([10, 0, 0], '5')).to.be.false;
-        expect(helpers.qualifiesForBlacklist([10, 2, 0], '4')).to.be.false;
+        const { qualifiesForBlacklist: shouldBlacklist } = helpers;
+
+        expect(shouldBlacklist([5, 0, 0], '4')).to.be.true;
+        expect(shouldBlacklist([10, 0, 0], '5')).to.be.false;
+        expect(shouldBlacklist([10, 2, 0], '4')).to.be.false;
     });
 
     it('should get the correct li id given a domain', () => {
@@ -66,10 +70,11 @@ describe('index helpers', () => {
         const body = url.searchParams.get('body');
 
         expect(body).to.be.equal(`(?i)speakatoo\\.com`);
-    });
+    }).timeout(5000);
 
     it('should figure out if a domain is caught or not', () => {
-        const { isWatched, isBlacklisted } = helpers;
+        const isWatched = (domain: string): boolean => Boolean(helpers.isWatched(domain));
+        const { isBlacklisted } = helpers;
 
         const validWatches = ['essayssos.com', 'trimfire', 'erozon', 'saleleads.net', 'SaleLeads.net'];
         const invalidWatches = ['non-existent-keyword', 'google.com'];
@@ -107,47 +112,65 @@ describe('index helpers', () => {
     });
 
     it('should correctly pluralise words', () => {
-        expect(helpers.pluralise('hit', 1)).to.be.equal('hit');
-        expect(helpers.pluralise('hit', 0)).to.be.equal('hits');
-        expect(helpers.pluralise('hit', 100)).to.be.equal('hits');
+        const { pluralise } = helpers;
+
+        expect(pluralise('hit', 1)).to.be.equal('hit');
+        expect(pluralise('hit', 0)).to.be.equal('hits');
+        expect(pluralise('hit', 100)).to.be.equal('hits');
     });
 
     it('should correctly fetch accurate tooltip texts for the emojis', () => {
-        expect(helpers.getActionDone('watched', true)).to.be.equal('watched: yes');
-        expect(helpers.getActionDone('watched', false)).to.be.equal('watched: no');
+        const { getActionDone } = helpers;
 
-        expect(helpers.getActionDone('blacklisted', true)).to.be.equal('blacklisted: yes');
-        expect(helpers.getActionDone('blacklisted', false)).to.be.equal('blacklisted: no');
+        expect(getActionDone('watched', true)).to.be.equal('watched: yes');
+        expect(getActionDone('watched', false)).to.be.equal('watched: no');
+
+        expect(getActionDone('blacklisted', true)).to.be.equal('blacklisted: yes');
+        expect(getActionDone('blacklisted', false)).to.be.equal('blacklisted: no');
     });
 
     it('should correctly fetch accurate tooltip texts for !!/watch and !!/blacklist', () => {
-        const watchedNoAction = helpers.getButtonsText('watch', 'example.com', true);
-        const blacklistedNoAction = helpers.getButtonsText('blacklist', 'example.com', true);
+        const { getButtonsText } = helpers;
 
-        const watchExampleCom = helpers.getButtonsText('watch', 'example.com', false);
-        const blacklistManyDots = helpers.getButtonsText('blacklist', 'many.dots..com', false);
+        const watchedNoAction = getButtonsText('watch', 'example.com', true);
+        const blacklistedNoAction = getButtonsText('blacklist', 'example.com', true);
+
+        const watchExampleCom = getButtonsText('watch', 'example.com', false);
+        const blacklistManyDots = getButtonsText('blacklist', 'many.dots..com', false);
 
         expect(watchedNoAction).to.be.equal(blacklistedNoAction);
         expect(watchExampleCom).to.be.equal('!!/watch- example\\.com');
         expect(blacklistManyDots).to.be.equal('!!/blacklist-website- many\\.dots\\.\\.com');
 
-        const watchShortenerPath = helpers.getButtonsText('watch', 'FNEuyd', false, 'goo.gl');
+        const watchShortenerPath = getButtonsText('watch', 'FNEuyd', false, 'goo.gl');
         expect(watchShortenerPath).to.be.equal('!!/watch- (?-i:FNEuyd)(?#goo.gl)');
 
-        const watchBlogspotCom = helpers.getButtonsText('watch', 'abc.blogspot.com', false);
-        const watchBlogspotDe = helpers.getButtonsText('watch', 'abc.blogspot.de', false);
+        const watchBlogspotCom = getButtonsText('watch', 'abc.blogspot.com', false);
+        const watchBlogspotDe = getButtonsText('watch', 'abc.blogspot.de', false);
 
         expect(watchBlogspotCom)
             .to.be.equal(watchBlogspotDe)
             .to.be.equal('!!/watch- abc\\.blogspot');
+
+        expect(
+            getButtonsText(
+                'blacklist',
+                'test.example.com',
+                false,
+                '',
+                /\bexample\.com(?<!api\.example\.com)\b/
+            )
+        ).to.be.equal(
+            String.raw`!!/blacklist-website- example\.com(?&lt;!api\.example\.com)`
+        );
     });
 
     it('should correctly fetch the correct regex for paths of shorteners', () => {
         Object.entries(
             {
                 '3vcWir3': ['bit.ly', '(?-i:3vcWir3)(?#bit.ly)'],
-                'FNEuyd': ['goo.gl', '(?-i:FNEuyd)(?#goo.gl)'],
-                'KdxEAt91D7k': ['youtu.be', '(?-i:KdxEAt91D7k)(?#youtu.be)'],
+                FNEuyd: ['goo.gl', '(?-i:FNEuyd)(?#goo.gl)'],
+                KdxEAt91D7k: ['youtu.be', '(?-i:KdxEAt91D7k)(?#youtu.be)'],
                 // escape +
                 '+jJyLwSpqLeAzNmFi': ['t.me', String.raw`(?-i:\+jJyLwSpqLeAzNmFi)(?#t.me)`],
                 // don't escape /

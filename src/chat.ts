@@ -86,8 +86,8 @@ function updateKeywordLists(
     try {
         const newRegex = new RegExp(regex, 'is');
 
-        const compare = (regex: RegExp): boolean =>
-            regex.source !== newRegex.source && regex.source !== `\\b${newRegex.source}\\b`;
+        const compare = (regexp: RegExp): boolean =>
+            regexp.source !== newRegex.source && regexp.source !== `\\b${newRegex.source}\\b`;
 
         switch (action) {
             case 'watch': {

@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "strict": true,
-        "lib": ["DOM", "DOM.iterable", "es2020"],
+        "lib": ["DOM", "DOM.iterable", "esnext"],
         "target": "esnext",
         "module": "commonjs",
         "moduleResolution": "node",

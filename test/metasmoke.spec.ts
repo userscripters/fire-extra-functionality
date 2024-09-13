@@ -3,7 +3,7 @@ import {
     getAllDomainsFromPost,
     getMsSearchResults
 } from '../src/metasmoke';
-import jsdom from "jsdom";
+import jsdom from 'jsdom';
 
 const { JSDOM } = jsdom;
 
@@ -12,18 +12,18 @@ global.GM_xmlhttpRequest = ({
     url,
     onload,
     onerror
-}) => {
+}): void => {
     fetch(url)
         .then(async response => {
             // @ts-ignore
             onload({
                 status: response.status,
                 responseText: await response.text()
-            })
+            });
         })
-        // @ts-ignore
+        // @ts-expect-error
         .catch(error => onerror(error));
-}
+};
 global.DOMParser = new JSDOM().window.DOMParser;
 
 describe('metasmoke helpers', () => {
@@ -42,12 +42,13 @@ describe('metasmoke helpers', () => {
         this.timeout(10000); // due to calls to MS search
 
         const termEntries = Object.entries({
-            'LcZ2pm9XtXA': [3, 0, 0],
-            'FNEuyd': [0, 1, 0],
+            LcZ2pm9XtXA: [3, 0, 0],
+            FNEuyd: [0, 1, 0],
             '3vcWir3': [1, 0, 0]
         });
 
         for (const [term, expectedCounts] of termEntries) {
+            // eslint-disable-next-line no-await-in-loop
             const actualCounts = await getMsSearchResults(term);
 
             expect(actualCounts).deep.equal(expectedCounts);
