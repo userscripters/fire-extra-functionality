@@ -145,9 +145,9 @@ export const helpers = {
         const watchValue = domain
             ? helpers.getRegexForPathShortener(term, domain)
             : term
-                // https://metasmoke.erwaysoftware.com/domains/groups/17
-                .replace(/blogspot\.\w+(\.\w+)?$/, 'blogspot') // abc.blogspot.com => abc.blogspot
-                .replace(/\./g, '\\.'); // escape dots
+                    // https://metasmoke.erwaysoftware.com/domains/groups/17
+                    .replace(/blogspot\.\w+(\.\w+)?$/, 'blogspot') // abc.blogspot.com => abc.blogspot
+                    .replace(/\./g, '\\.'); // escape dots
 
         const replacement = regex?.source.slice(2, -2)
             // fire-tooltip content is parsed as HTML
