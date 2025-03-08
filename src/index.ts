@@ -155,9 +155,9 @@ export const helpers = {
 
         if (action === 'watch') {
             command = '!!/watch-';
-        } else if (action === 'blacklist' && !domain) {
+        } else if (!domain) {
             command = '!!/blacklist-website-';
-        } else if (action === 'blacklist' && domain) {
+        } else if (domain) {
             // https://chat.stackexchange.com/transcript/11540?m=67365890#67365890
             command = '!!/blacklist-keyword-';
         }

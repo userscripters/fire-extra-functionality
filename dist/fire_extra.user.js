@@ -546,7 +546,14 @@
     },
     // the tooltip text of !!/watch, !!/blacklist buttons
     getButtonsText: (action, term, done, domain, regex) => {
-      const command = action === "watch" ? "!!/watch-" : "!!/blacklist-website-";
+      let command = "";
+      if (action === "watch") {
+        command = "!!/watch-";
+      } else if (!domain) {
+        command = "!!/blacklist-website-";
+      } else if (domain) {
+        command = "!!/blacklist-keyword-";
+      }
       const alreadyDone = "action already taken";
       const watchValue = domain ? helpers.getRegexForPathShortener(term, domain) : term.replace(/blogspot\.\w+(\.\w+)?$/, "blogspot").replace(/\./g, "\\.");
       const replacement = regex?.source.slice(2, -2).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
