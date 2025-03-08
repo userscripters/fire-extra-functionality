@@ -41,8 +41,8 @@
   async function getGraphQLInformation(idsArray) {
     const query = getDomainPostsQuery(idsArray);
     const payload = {
-      "query": query,
-      "variables": null
+      query,
+      variables: null
     };
     const url = `https://metasmoke.erwaysoftware.com/api/graphql?key=${metasmokeApiKey}`;
     const call = await fetch(url, {
@@ -66,15 +66,17 @@
   }
   function getPostCounts(parsedHtml) {
     const tabsSelector = '.nav-tabs li:not([role="presentation"])';
-    const counts = [...parsedHtml.querySelectorAll(tabsSelector)].map((element) => /\d+/.exec(element?.textContent?.trim() || "")?.[0]).map(Number);
+    const counts = [...parsedHtml.querySelectorAll(tabsSelector)].map((element) => /\d+/.exec(element.textContent?.trim() || "")?.[0]).map(Number);
     return counts.length ? counts : [0, 0, 0];
   }
   function getMsSearchResults(term) {
-    const encoded = encodeURIComponent(term);
+    const url = new URL("https://metasmoke.erwaysoftware.com/search");
+    url.searchParams.set("utf8", "\u2713");
+    url.searchParams.set("body", term);
     return new Promise((resolve, reject) => {
       GM_xmlhttpRequest({
         method: "GET",
-        url: `https://metasmoke.erwaysoftware.com/search?utf8=\u2713&body=${encoded}`,
+        url: url.toString(),
         onload: (response) => {
           const { status, responseText } = response;
           if (status === 200) {
@@ -91,10 +93,11 @@
     });
   }
   async function getAllDomainsFromPost(metasmokePostId) {
-    const method = `${metasmokePostId}/domains`;
-    const parameters = `?key=${metasmokeApiKey}&filter=${postDomainsApiFilter}&per_page=100`;
-    const msApiUrl = metasmokeApiBase + method + parameters;
-    const apiCallResponse = await fetch(msApiUrl);
+    const url = new URL(`${metasmokeApiBase}${metasmokePostId}/domains`);
+    url.searchParams.set("key", metasmokeApiKey);
+    url.searchParams.set("filter", postDomainsApiFilter);
+    url.searchParams.set("per_page", "100");
+    const apiCallResponse = await fetch(url.toString());
     const jsonResponse = await apiCallResponse.json();
     return jsonResponse.items;
   }
@@ -107,13 +110,14 @@
     whitelisted: "https://raw.githubusercontent.com/userscripters/fire-extra-functionality/master/ini/whitelisted_domains.txt",
     redirectors: "https://raw.githubusercontent.com/userscripters/fire-extra-functionality/master/ini/redirectors.txt",
     watched: "https://raw.githubusercontent.com/Charcoal-SE/SmokeDetector/master/watched_keywords.txt",
-    blacklisted: "https://raw.githubusercontent.com/Charcoal-SE/SmokeDetector/master/blacklisted_websites.txt"
+    blacklisted: "https://raw.githubusercontent.com/Charcoal-SE/SmokeDetector/master/blacklisted_websites.txt",
+    bad: "https://raw.githubusercontent.com/Charcoal-SE/SmokeDetector/master/bad_keywords.txt"
   };
   function makeRegexESCompatible(keyword) {
-    const shortenerPathRegex = /\(\?-i:(\w+)\)\(\?#[a-zA-Z.]+\)/;
-    const urlPath = keyword.match(shortenerPathRegex)?.[1];
-    if (!urlPath) return [];
-    else return [new RegExp(urlPath, "s")];
+    const shortenerPathRegex = /\(\?-i:(\w+)\)\(\?#\s*[a-zA-Z.]+\)/;
+    const path = shortenerPathRegex.exec(keyword)?.[1];
+    if (!path) return [];
+    else return [new RegExp(path, "s")];
   }
   function getRegexesFromTxtFile(fileContent, position) {
     return fileContent.split("\n").flatMap((line) => {
@@ -126,7 +130,7 @@
           position === 2 ? `\\b${keyword}\\b` : keyword,
           "is"
         );
-      } catch (error) {
+      } catch {
         return makeRegexESCompatible(keyword);
       }
       return [regexToReturn];
@@ -138,7 +142,7 @@
       let regex;
       try {
         regex = new RegExp(/(?:Watch|Blacklist)\s(.*)/.exec(title)?.[1] || "");
-      } catch (error) {
+      } catch {
         return [];
       }
       const authorName = /^(.*?):/.exec(title)?.[1];
@@ -163,37 +167,49 @@
 
   // src/domain_stats.ts
   var Domains = class {
-    static allDomainInformation = {};
     // contains both the SE hit count and the MS feedbacks
-    static watched;
+    static allDomainInformation = {};
+    static watched = [];
     static blacklisted;
     static pullRequests;
     static whitelisted;
     static redirectors;
     static async fetchAllDomainInformation() {
-      if (this.watched && this.blacklisted && this.pullRequests && this.whitelisted && this.redirectors) return;
+      if (this.watched.length) return;
       const [
         watchedCall,
         blacklistedCall,
         prsCall,
         whitelistedCall,
-        redirectorsCall
+        redirectorsCall,
+        badCall
       ] = await Promise.all([
         fetch(githubUrls.watched),
         fetch(githubUrls.blacklisted),
         fetch(githubUrls.api),
         fetch(githubUrls.whitelisted),
-        fetch(githubUrls.redirectors)
+        fetch(githubUrls.redirectors),
+        fetch(githubUrls.bad)
       ]);
-      const [watched, blacklisted, prs, whitelisted, redirectors] = await Promise.all([
+      const [
+        watched,
+        blacklisted,
+        prs,
+        whitelisted,
+        redirectors,
+        bad
+      ] = await Promise.all([
         watchedCall.text(),
         blacklistedCall.text(),
         prsCall.json(),
         whitelistedCall.text(),
-        redirectorsCall.text()
+        redirectorsCall.text(),
+        badCall.text()
       ]);
+      const badRegexes = getRegexesFromTxtFile(blacklisted, 0);
+      const blacklistedRegexes = getRegexesFromTxtFile(bad, 0);
       this.watched = getRegexesFromTxtFile(watched, 2);
-      this.blacklisted = getRegexesFromTxtFile(blacklisted, 0);
+      this.blacklisted = badRegexes.concat(blacklistedRegexes);
       this.pullRequests = parseApiResponse(prs);
       this.whitelisted = whitelisted.split("\n");
       this.redirectors = redirectors.split("\n");
@@ -261,7 +277,7 @@
   function updateKeywordLists(regex, action) {
     try {
       const newRegex = new RegExp(regex, "is");
-      const compare = (regex2) => regex2.source !== newRegex.source && regex2.source !== `\\b${newRegex.source}\\b`;
+      const compare = (regexp) => regexp.source !== newRegex.source && regexp.source !== `\\b${newRegex.source}\\b`;
       switch (action) {
         case "watch": {
           const modified = new RegExp(`\\b${newRegex.source}\\b`, "si");
@@ -280,27 +296,26 @@
           break;
         default:
       }
-    } catch (error) {
+    } catch {
       return;
     }
   }
   function parseChatMessage(content) {
-    const message = content.body?.innerHTML || "";
+    const message = content.body.innerHTML || "";
     const autoReloadOf = /SmokeDetector: Auto (?:un)?(?:watch|blacklist) of/;
-    const blacklistsReloaded = /Blacklists reloaded at/;
-    if (!autoReloadOf.test(message) || !blacklistsReloaded.test(message)) return;
+    if (!autoReloadOf.test(message) || !message.includes("Blacklists reloaded at")) return;
     const regexText = content.querySelectorAll("code")[1].innerHTML;
-    const anchorHtml = content.querySelectorAll("a")?.[1].innerHTML;
+    const anchorHtml = content.querySelectorAll("a")[1].innerHTML;
     const action = ["watch", "unwatch", "blacklist", "unblacklist"].find((word) => {
       const regex = new RegExp(`Auto\\s${word}\\sof\\s`);
       return regex.test(anchorHtml);
     }) || "watch";
     updateKeywordLists(regexText, action);
   }
-  function newChatEventOccurred({ event_type, user_id, content }) {
+  function newChatEventOccurred({ event_type, user_id, content }, updateGithub = true) {
     if (user_id !== smokeyId && user_id !== metasmokeId || event_type !== 1) return;
     parseChatMessage(content);
-    const message = content.body?.innerHTML || "";
+    const message = content.body.innerHTML || "";
     const prId = Number(/Merge pull request #(\d+)/.exec(message)?.[1]);
     const pr = Domains.pullRequests.find(({ id }) => id === prId);
     if (pr && prId) {
@@ -308,6 +323,7 @@
       updateKeywordLists(regex.source, type);
       Domains.pullRequests = Domains.pullRequests.filter(({ id }) => id !== prId);
     }
+    if (!updateGithub) return;
     getUpdatedPrInfo(message).then((info) => {
       Domains.pullRequests = (info || []).filter(({ id }) => id !== prId);
     }).catch((error) => console.error(error));
@@ -414,18 +430,16 @@
         count: tpCount,
         type: "tp"
       },
-      {},
       {
         count: fpCount,
         type: "fp"
       },
-      {},
       {
         count: naaCount,
         type: "naa"
       }
     ];
-    return feedbacks.map(({ count, type }) => type ? getColouredSpan(count, type) : ", ");
+    return feedbacks.map(({ count, type }) => getColouredSpan(count, type)).flatMap((item, i) => i === feedbacks.length - 1 ? [item] : [item, ", "]);
   }
   function getPendingPrElement(pr) {
     const { author, type, regex, id } = pr;
@@ -454,13 +468,20 @@
     msStats.replaceChildren(...getColouredSpans(counts));
   }
   async function triggerDomainUpdate(domainIdsValid) {
-    const domainStats = await Domains.getTpFpNaaCountFromDomains(domainIdsValid) || {};
+    const domainStats = await Domains.getTpFpNaaCountFromDomains(domainIdsValid);
     return Object.entries(domainStats).flatMap(([domainName, feedbackCount]) => {
       const domainId = helpers.getDomainId(domainName);
       const domainLi = document.getElementById(domainId);
       if (!domainLi) return [];
       updateMsCounts(feedbackCount, domainLi);
-      Domains.allDomainInformation[domainName].metasmoke = feedbackCount;
+      if (Domains.allDomainInformation[domainName]) {
+        Domains.allDomainInformation[domainName].metasmoke = feedbackCount;
+      } else {
+        Domains.allDomainInformation[domainName] = {
+          metasmoke: feedbackCount,
+          stackexchange: "0"
+        };
+      }
       return [domainName];
     });
   }
@@ -468,13 +489,36 @@
   // src/index.ts
   var metasmokeSearchUrl = "https://metasmoke.erwaysoftware.com/search";
   var helpers = {
+    generateSearchRegex: (text) => {
+      let searchTerm = `(?s)(?:^|\\b)${text}(?:\\b|$)`;
+      const textNoNoncaptureGroups = text.replace(/\(\?:/g, "(").replace(/\(\?-i:([^()]+)\)/, "$1");
+      const regex = /^(\w+(?![?*+{])|\(\?-i:[^+?*{}()|]+\)\w*(?![?*+{]))/;
+      if (!/[+?*{}()|]/.test(textNoNoncaptureGroups)) {
+        searchTerm = `(?s)${text}(?<=(?:^|\\b)${text})(?:\\b|$)`;
+      } else if (regex.test(text)) {
+        const replaced = text.replace(
+          regex,
+          "$1(?<=(?:^|\\b)$1)"
+        );
+        searchTerm = `(?s)${replaced}(?:\\b|$)`;
+      }
+      return searchTerm;
+    },
     // should be the same as "See the MS search here" text in PRs
     getMetasmokeSearchUrl: (term) => {
-      const searchTerm = term.includes(".") ? term : helpers.getRegexForPathShortener(term);
-      const bodyParam = `(?s:\\b${searchTerm}\\b)`;
-      const parameters = `?utf8=\u2713&body_is_regex=1&body=${bodyParam}`;
-      const fullUrl = metasmokeSearchUrl + parameters;
-      return encodeURI(fullUrl);
+      const text = term.includes(".") ? term : helpers.getRegexForPathShortener(term);
+      const unescaped = term.replace(/\\./g, ".");
+      const searchTerm = helpers.isBlacklisted(unescaped) ? `(?i)${text}` : helpers.generateSearchRegex(text);
+      const url = new URL(metasmokeSearchUrl);
+      url.searchParams.set("utf8", "\u2713");
+      url.searchParams.set("or_search", "1");
+      url.searchParams.set("title_is_regex", "1");
+      url.searchParams.set("body_is_regex", "1");
+      url.searchParams.set("username_is_regex", "1");
+      url.searchParams.set("title", searchTerm);
+      url.searchParams.set("body", searchTerm);
+      url.searchParams.set("username", searchTerm);
+      return url.toString();
     },
     // Follow https://charcoal-se.org/smokey/Guidance-for-Blacklisting-and-Watching:
     qualifiesForWatch: ([tpCount, fpCount, naaCount], seHits) => {
@@ -483,13 +527,14 @@
     qualifiesForBlacklist: ([tpCount, fpCount, naaCount], seHits) => {
       return tpCount >= 5 && fpCount + naaCount === 0 && Number(seHits) < 5;
     },
-    // given a regexes array and a domain, find if the latter is matched by any items in the former
+    // find if given string exists in the watchlist/blacklist
+    // returns the last regex from that list which matches that string
     isCaught: (type, domain) => {
       const regexes = Domains[`${type}ed`];
-      return regexes.some((regex) => regex.test(domain));
+      return regexes.findLast((regex) => regex.test(domain));
     },
     isWatched: (domain) => helpers.isCaught("watch", domain),
-    isBlacklisted: (domain) => helpers.isCaught("blacklist", domain),
+    isBlacklisted: (domain) => Boolean(helpers.isCaught("blacklist", domain)),
     // get the id the domain li has - dots are replaced with dash
     getDomainId: (domainName) => `fire-extra-${domainName.replace(/\./g, "-")}`,
     // helper to pluralise strings
@@ -500,42 +545,44 @@
       return `${action}: ${yesNo}`;
     },
     // the tooltip text of !!/watch, !!/blacklist buttons
-    getButtonsText: (action, term, done, domain) => {
+    getButtonsText: (action, term, done, domain, regex) => {
       const command = action === "watch" ? "!!/watch-" : "!!/blacklist-website-";
       const alreadyDone = "action already taken";
       const watchValue = domain ? helpers.getRegexForPathShortener(term, domain) : term.replace(/blogspot\.\w+(\.\w+)?$/, "blogspot").replace(/\./g, "\\.");
-      return done ? alreadyDone : `${command} ${watchValue}`;
+      const replacement = regex?.source.slice(2, -2).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+      return done ? alreadyDone : `${command} ${action === "blacklist" && regex ? replacement : watchValue}`;
     },
     // (?-i:) - case sensitive
     // (?#)   - the shortener domain
     getRegexForPathShortener: (path, domain) => {
-      const escaped = path.replace(/[/\-\\^$*+?.()|[\]{}]/g, "\\$&");
+      const escaped = path.replace(/[+\\^$*?.()|[\]{}]/g, "\\$&");
       const mainPart = `(?-i:${escaped})`;
       const comment = `(?#${domain || ""})`;
       return `${mainPart}${domain ? comment : ""}`;
     }
   };
   function updateEmojisInformation(term) {
+    if (!Domains.allDomainInformation[term]) return;
     const {
       stackexchange: seResultCount,
-      metasmoke: metasmokeStats
+      metasmoke: metasmokeStats = []
     } = Domains.allDomainInformation[term];
     const domainId = helpers.getDomainId(term);
     const domainLi = document.getElementById(domainId);
     const domainName = term.includes(".") ? "" : domainLi?.parentElement?.parentElement?.firstChild?.textContent;
-    if (!seResultCount || !metasmokeStats?.length) return;
+    if (!seResultCount || !metasmokeStats.length) return;
     const isWatched = helpers.isWatched(term);
     const isBlacklisted = helpers.isBlacklisted(term);
     const qualifiesForWatch = helpers.qualifiesForWatch(metasmokeStats, seResultCount);
     const qualifiesForBlacklist = helpers.qualifiesForBlacklist(metasmokeStats, seResultCount);
     const watch = {
-      human: helpers.getActionDone("watched", isWatched),
-      tooltip: helpers.getButtonsText("watch", term, isWatched || isBlacklisted, domainName),
+      human: helpers.getActionDone("watched", Boolean(isWatched)),
+      tooltip: helpers.getButtonsText("watch", term, Boolean(isWatched) || isBlacklisted, domainName),
       suggested: qualifiesForWatch && !isWatched && !isBlacklisted
     };
     const blacklist = {
       human: helpers.getActionDone("blacklisted", isBlacklisted),
-      tooltip: helpers.getButtonsText("blacklist", term, isBlacklisted, domainName),
+      tooltip: helpers.getButtonsText("blacklist", term, isBlacklisted, domainName, isWatched),
       suggested: qualifiesForBlacklist && !isBlacklisted
     };
     const watchInfo = domainLi?.querySelector(".fire-extra-watch-info");
@@ -561,10 +608,9 @@
   }
   function updateStackSearchResultCount(term, domainLi) {
     new Promise((resolve) => resolve("0")).then((hitCount) => {
+      if (!Domains.allDomainInformation[term]) return;
       Domains.allDomainInformation[term].stackexchange = hitCount;
       updateSeCount(hitCount, domainLi);
-      const infoObject = Domains.allDomainInformation[term];
-      if (!infoObject.metasmoke || !infoObject.stackexchange) return;
       updateEmojisInformation(term);
     }).catch((error) => {
       toastr.error(error);
@@ -573,10 +619,9 @@
   }
   function updateMsResults(term, domainLi) {
     getMsSearchResults(term).then((results) => {
+      if (!Domains.allDomainInformation[term]) return;
       Domains.allDomainInformation[term].metasmoke = results;
       updateMsCounts(results, domainLi);
-      const infoObject = Domains.allDomainInformation[term];
-      if (!infoObject.metasmoke || !infoObject.stackexchange) return;
       updateEmojisInformation(term);
     }).catch((error) => {
       toastr.error(error);
@@ -604,34 +649,35 @@
     updateStackSearchResultCount(domainName, domainItem);
     addChatListeners(domainItem, githubPrOpenItem);
   }
-  function createDomainHtml(domainName, domainList, child = false) {
-    Domains.allDomainInformation[domainName] = {};
+  function createDomainHtml(name, list, child = false) {
+    Domains.allDomainInformation[name] = {};
     const elementType = child ? "ul" : "li";
     const domainItem = document.createElement(elementType);
-    domainItem.id = helpers.getDomainId(domainName) + (child ? "-children" : "");
+    domainItem.id = helpers.getDomainId(name) + (child ? "-children" : "");
     if (child) {
       domainItem.style.marginLeft = "15px";
-      const pathnames = [...document.querySelectorAll(".fire-reported-post a")].map((anchor) => new URL(anchor.href)).filter((url) => url.host === domainName).map((url) => url.pathname.replace("/", ""));
+      const pathnames = [...document.querySelectorAll(".fire-reported-post a")].map((anchor) => new URL(anchor.href)).filter((url) => url.host === name).map((url) => url.pathname.replace("/", ""));
       const uniquePathnames = [...new Set(pathnames)];
+      if (!uniquePathnames.every(Boolean)) return;
       uniquePathnames.forEach((pathname) => createDomainHtml(pathname, domainItem));
-      domainList.append(domainItem);
+      list.append(domainItem);
       return;
-    } else if (!domainName.includes(".")) {
-      updateMsResults(domainName, domainItem);
-      domainItem.append(domainName, " ");
+    } else if (!name.includes(".")) {
+      updateMsResults(name, domainItem);
+      domainItem.append(name, " ");
     } else {
-      domainItem.append(domainName, " ");
+      domainItem.append(name, " ");
     }
-    domainList.append(domainItem);
-    if (Domains.whitelisted.includes(domainName)) {
+    list.append(domainItem);
+    if (Domains.whitelisted.includes(name)) {
       domainItem.append(getTag("whitelisted"));
       return;
-    } else if (Domains.redirectors.includes(domainName) && !child) {
+    } else if (Domains.redirectors.includes(name)) {
       domainItem.append(getTag("shortener"));
-      createDomainHtml(domainName, domainItem, true);
+      createDomainHtml(name, domainItem, true);
       return;
     }
-    createHTMLForGivenList(domainName, domainItem);
+    createHTMLForGivenList(name, domainItem);
   }
   async function addHtmlToFirePopup() {
     const reportedPostDiv = document.querySelector(".fire-reported-post");
@@ -661,15 +707,41 @@
     if (!globalThis.window) return;
     await new Promise((resolve) => setTimeout(resolve, 0));
     await Domains.fetchAllDomainInformation();
+    const domParser = new DOMParser();
     CHAT.addEventHandlerHook((event) => {
       const eventToPass = Object.assign({
         ...event,
         // because we can't use DOMParser with tests,
         // newChatEventOccurred has to accept a Document argument for content
-        content: new DOMParser().parseFromString(event.content, "text/html")
+        content: domParser.parseFromString(event.content, "text/html")
       });
       newChatEventOccurred(eventToPass);
     });
+    try {
+      const fkey = document.querySelector("#fkey")?.value;
+      const formData = new FormData();
+      formData.append("since", "0");
+      formData.append("mode", "Messages");
+      formData.append("msgCount", "100");
+      formData.append("fkey", fkey || "");
+      const request = await fetch(
+        "https://chat.stackexchange.com/chats/11540/events",
+        {
+          method: "POST",
+          body: formData
+        }
+      );
+      const response = await request.json();
+      response.events.filter(({ event_type, content }) => event_type === 1 && content).forEach((event) => {
+        const parsed = Object.assign({
+          ...event,
+          content: domParser.parseFromString(event.content, "text/html")
+        });
+        newChatEventOccurred(parsed, false);
+      });
+    } catch (error) {
+      console.error(error);
+    }
     window.addEventListener("fire-popup-open", () => {
       void addHtmlToFirePopup();
     });
