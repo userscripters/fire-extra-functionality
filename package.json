@@ -4,10 +4,11 @@
   "description": "Adds some more features to the FIRE userscript",
   "scripts": {
     "esbuild": "node build.js",
-    "build": "npm run lint && npm run esbuild",
+    "build": "npm run lint && npm run typecheck && npm run esbuild",
     "lint": "eslint src",
     "lintTst": "eslint test --fix",
-    "test": "TS_NODE_PROJECT='./test/tsconfig.json' mocha test/**/*.spec.ts*"
+    "test": "TS_NODE_PROJECT='./test/tsconfig.json' mocha test/**/*.spec.ts*",
+    "typecheck": "tsc --noEmit --project tsconfig.json"
   },
   "repository": {
     "type": "git",
