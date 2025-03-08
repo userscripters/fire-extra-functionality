@@ -151,7 +151,17 @@ export const helpers = {
         domain?: string,
         regex?: RegExp
     ): string => {
-        const command = action === 'watch' ? '!!/watch-' : '!!/blacklist-website-';
+        let command = '';
+
+        if (action === 'watch') {
+            command = '!!/watch-';
+        } else if (action === 'blacklist' && !domain) {
+            command = '!!/blacklist-website-';
+        } else if (action === 'blacklist' && domain) {
+            // https://chat.stackexchange.com/transcript/11540?m=67365890#67365890
+            command = '!!/blacklist-keyword-';
+        }
+
         const alreadyDone = 'action already taken';
 
         const watchValue = domain

@@ -145,6 +145,9 @@ describe('index helpers', () => {
         const watchShortenerPath = getButtonsText('watch', 'FNEuyd', false, 'goo.gl');
         expect(watchShortenerPath).to.be.equal('!!/watch- (?-i:FNEuyd)(?#goo.gl)');
 
+        const blacklistShortenerPath = getButtonsText('blacklist', 'FNEuyd', false, 'goo.gl');
+        expect(blacklistShortenerPath).to.be.equal('!!/blacklist-keyword- (?-i:FNEuyd)(?#goo.gl)');
+
         const watchBlogspotCom = getButtonsText('watch', 'abc.blogspot.com', false);
         const watchBlogspotDe = getButtonsText('watch', 'abc.blogspot.de', false);
 
