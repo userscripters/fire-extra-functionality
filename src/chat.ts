@@ -136,7 +136,10 @@ function parseChatMessage(content: Document): void {
     updateKeywordLists(regexText, action);
 }
 
-export function newChatEventOccurred({ event_type, user_id, content }: ChatParsedEvent): void {
+export function newChatEventOccurred(
+    { event_type, user_id, content }: ChatParsedEvent,
+    updateGithub = true
+): void {
     if ((user_id !== smokeyId && user_id !== metasmokeId) || event_type !== 1) return;
 
     parseChatMessage(content);
@@ -154,7 +157,8 @@ export function newChatEventOccurred({ event_type, user_id, content }: ChatParse
             .filter(({ id }) => id !== prId);
     }
 
-    // don't wait for that to finish for the function to return
+    if (!updateGithub) return;
+
     getUpdatedPrInfo(message)
         .then(info => {
             Domains.pullRequests = (info || [])

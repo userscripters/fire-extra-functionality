@@ -27,7 +27,7 @@ export const githubUrls = {
 };
 
 function makeRegexESCompatible(keyword: string): RegExp[] {
-    const shortenerPathRegex = /\(\?-i:(\w+)\)\(\?#[a-zA-Z.]+\)/;
+    const shortenerPathRegex = /\(\?-i:(\w+)\)\(\?#\s*[a-zA-Z.]+\)/;
 
     const path = shortenerPathRegex.exec(keyword)?.[1];
     if (!path) return [];

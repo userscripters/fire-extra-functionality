@@ -26,6 +26,18 @@ export interface Toastr {
     error: (message: string) => void;
 }
 
+interface ChatEvent {
+    event_type: number;
+    content?: string;
+    user_id: number;
+}
+
+interface ChatEvents {
+    events: ChatEvent[];
+    time: number;
+    sync: number;
+}
+
 declare const CHAT: ChatObject;
 declare const toastr: Toastr;
 declare const fire: {
@@ -422,16 +434,52 @@ void (async function(): Promise<void> {
     await new Promise(resolve => setTimeout(resolve, 0));
     await Domains.fetchAllDomainInformation();
 
+    const domParser = new DOMParser();
+
     CHAT.addEventHandlerHook(event => {
         const eventToPass = Object.assign({
             ...event,
             // because we can't use DOMParser with tests,
             // newChatEventOccurred has to accept a Document argument for content
-            content: new DOMParser().parseFromString(event.content, 'text/html')
+            content: domParser.parseFromString(event.content, 'text/html')
         }) as ChatParsedEvent;
 
         newChatEventOccurred(eventToPass);
     });
+
+    // to fix caching issues, fetch the most recent 100 messages
+    // and run newChatEventOccurred on them
+    try {
+        const fkey = document.querySelector<HTMLInputElement>('#fkey')?.value;
+        const formData = new FormData();
+        formData.append('since', '0');
+        formData.append('mode', 'Messages');
+        formData.append('msgCount', '100');
+        formData.append('fkey', fkey || '');
+
+        const request = await fetch(
+            'https://chat.stackexchange.com/chats/11540/events',
+            {
+                method: 'POST',
+                body: formData
+            }
+        );
+        const response = await request.json() as ChatEvents;
+
+        response.events
+            .filter(({ event_type, content }) => event_type === 1 && content)
+            .forEach(event => {
+                const parsed = Object.assign({
+                    ...event,
+                    content: domParser.parseFromString(event.content as string, 'text/html')
+                }) as ChatParsedEvent;
+
+                // do NOT fetch PR info from the GitHub API
+                newChatEventOccurred(parsed, false);
+            });
+    } catch (error) {
+        console.error(error);
+    }
 
     window.addEventListener('fire-popup-open', () => {
         void addHtmlToFirePopup();
