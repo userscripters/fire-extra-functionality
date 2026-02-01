@@ -23,6 +23,7 @@ export function getSeResultCount(pageHtml: Document): string {
     return pageHtml
         .querySelector('.results-header h2') // the results element
         ?.textContent // .innerText not implemented in JSDOM
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         ?.trim() // textContent includes some spaces, trim them
         .replace(/,/g, '') // 5,384 => 5384
         .match(/\d+/)?.[0] || '0'; // get the count

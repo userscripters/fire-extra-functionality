@@ -91,6 +91,7 @@ function getPostCounts(parsedHtml: Document): number[] {
     const tabsSelector = '.nav-tabs li:not([role="presentation"])';
 
     const counts = [...parsedHtml.querySelectorAll<HTMLAnchorElement>(tabsSelector)]
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         .map(element => /\d+/.exec(element.textContent?.trim() || '')?.[0])
         .map(Number);
 

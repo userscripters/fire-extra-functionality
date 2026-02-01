@@ -161,7 +161,7 @@ export function newChatEventOccurred(
 
     getUpdatedPrInfo(message)
         .then(info => {
-            Domains.pullRequests = (info || [])
+            Domains.pullRequests = (info ?? [])
                 // since info from API might be cached
                 .filter(({ id }) => id !== prId);
         })

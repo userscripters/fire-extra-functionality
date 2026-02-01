@@ -200,7 +200,7 @@ function updateEmojisInformation(term: string): void {
 
     const {
         stackexchange: seResultCount,
-        metasmoke: metasmokeStats = []
+        metasmoke: metasmokeStats
     } = Domains.allDomainInformation[term];
 
     const domainId = helpers.getDomainId(term);
@@ -437,7 +437,7 @@ async function addHtmlToFirePopup(): Promise<void> {
     dataWrapperElement.append(domainList);
 }
 
-void (async function(): Promise<void> {
+void (async function (): Promise<void> {
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!globalThis.window) return; // for tests
 

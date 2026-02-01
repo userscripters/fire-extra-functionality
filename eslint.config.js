@@ -1,8 +1,9 @@
 import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
+import { defineConfig } from 'eslint/config';
 import stylistic from '@stylistic/eslint-plugin';
 
-export default tseslint.config({
+export default defineConfig({
     extends: [
         eslint.configs.recommended,
         ...tseslint.configs.strictTypeChecked,
@@ -43,16 +44,21 @@ export default tseslint.config({
         '@typescript-eslint/prefer-promise-reject-errors': 'off',
         '@typescript-eslint/no-extraneous-class': 'off',
         '@typescript-eslint/non-nullable-type-assertion-style': 'off',
+        '@typescript-eslint/prefer-nullish-coalescing': ['error', {
+            ignorePrimitives: {
+                boolean: true,
+                string: true
+            }
+        }],
         '@typescript-eslint/no-misused-promises': ['error', { checksVoidReturn: false }],
         '@typescript-eslint/no-unnecessary-type-parameters': 'off',
-        '@typescript-eslint/prefer-nullish-coalescing': 'off',
+        '@typescript-eslint/no-floating-promises': 'error',
 
         '@stylistic/arrow-parens': ['warn', 'as-needed'],
         '@stylistic/quote-props': ['warn', 'as-needed'],
         '@stylistic/brace-style': ['error', '1tbs'],
         '@stylistic/comma-dangle': 'off',
         '@stylistic/indent-binary-ops': 'off',
-        '@stylistic/space-before-function-paren': 'off',
         '@stylistic/type-annotation-spacing': [
             'warn',
             {
