@@ -22,20 +22,20 @@
   },
   "homepage": "https://github.com/userscripters/fire-extra-functionality#readme",
   "devDependencies": {
-    "@eslint/js": "^9.39.3",
-    "@stylistic/eslint-plugin": "^5.9.0",
+    "@eslint/js": "^9.39.4",
+    "@stylistic/eslint-plugin": "^5.10.0",
     "@types/chai": "^5.2.3",
     "@types/jsdom": "^27.0.0",
     "@types/mocha": "^10.0.10",
-    "@types/node": "^25.3.3",
+    "@types/node": "^25.5.0",
     "@types/tampermonkey": "^5.0.5",
     "chai": "^6.2.2",
-    "esbuild": "^0.27.3",
+    "esbuild": "^0.27.4",
     "jsdom": "^27.4.0",
     "mocha": "^11.7.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.56.1"
+    "typescript-eslint": "^8.58.0"
   },
   "type": "module"
 }
