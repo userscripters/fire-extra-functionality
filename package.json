@@ -27,15 +27,15 @@
     "@types/chai": "^5.2.3",
     "@types/jsdom": "^27.0.0",
     "@types/mocha": "^10.0.10",
-    "@types/node": "^25.6.0",
+    "@types/node": "^25.9.1",
     "@types/tampermonkey": "^5.0.5",
     "chai": "^6.2.2",
     "esbuild": "^0.28.0",
     "jsdom": "^27.4.0",
-    "mocha": "^11.7.5",
+    "mocha": "^11.7.6",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.59.1"
+    "typescript-eslint": "^8.60.0"
   },
   "type": "module"
 }
